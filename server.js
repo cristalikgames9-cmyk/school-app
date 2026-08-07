@@ -9,7 +9,6 @@ const fs = require('fs');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Очистка URL от лишних слэшей и /rest/v1/
 const rawUrl = process.env.SUPABASE_URL || '';
 const cleanUrl = rawUrl.replace(/\/rest\/v1\/?$/, '').replace(/\/+$/, '');
 
@@ -20,6 +19,8 @@ const supabase = createClient(
 
 app.use(express.json());
 app.use(cookieParser());
+
+// Главное исправление: абсолютный путь к статической папке public
 app.use(express.static(path.join(__dirname, 'public')));
 
 function readJSON(filename) {
@@ -28,7 +29,6 @@ function readJSON(filename) {
   return JSON.parse(fs.readFileSync(filePath, 'utf-8'));
 }
 
-// Загрузка и парсинг всех .txt файлов уроков
 function loadLessonsFromFiles() {
   const lessonsDir = path.join(__dirname, 'data', 'lessons');
   if (!fs.existsSync(lessonsDir)) return [];
@@ -129,32 +129,29 @@ async function authMiddleware(req, res, next) {
   }
 }
 
-/* === МАРШРУТЫ АВТОРИЗАЦИИ === */
+/* === МАРШРУТЫ HTML СТРАНИЦ === */
+app.get('/subject.html', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'subject.html'));
+});
 
+app.get('/lesson.html', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'lesson.html'));
+});
+
+/* === МАРШРУТЫ API === */
 app.post('/api/auth/register', async (req, res) => {
   const { username, password } = req.body;
-
   if (!username || !password) return res.status(400).json({ error: 'Заполните все поля' });
-  if (!/^[a-zA-Z0-9_]+$/.test(username)) {
-    return res.status(400).json({ error: 'Имя только латиницей и цифрами' });
-  }
-  if (!/^[a-zA-Z0-9]{4,12}$/.test(password)) {
-    return res.status(400).json({ error: 'Пароль от 4 до 12 символов' });
-  }
-
+  
   try {
     const hashedPassword = await bcrypt.hash(password, 10);
-
     const { data, error } = await supabase
       .from('users')
       .insert([{ username, password: hashedPassword }])
       .select()
       .single();
 
-    if (error) {
-      if (error.code === '23505') return res.status(400).json({ error: 'Пользователь уже существует' });
-      return res.status(500).json({ error: error.message });
-    }
+    if (error) return res.status(400).json({ error: 'Пользователь уже существует' });
 
     res.cookie('userId', data.id, { maxAge: 30 * 24 * 60 * 60 * 1000, httpOnly: true, sameSite: 'lax' });
     res.json({ id: data.id, username: data.username });
@@ -165,7 +162,6 @@ app.post('/api/auth/register', async (req, res) => {
 
 app.post('/api/auth/login', async (req, res) => {
   const { username, password } = req.body;
-
   try {
     const { data: user, error } = await supabase
       .from('users')
@@ -185,37 +181,9 @@ app.post('/api/auth/login', async (req, res) => {
   }
 });
 
-app.post('/api/auth/logout', (req, res) => {
-  res.clearCookie('userId');
-  res.json({ success: true });
-});
-
 app.get('/api/auth/me', authMiddleware, async (req, res) => {
-  try {
-    const { data: results } = await supabase
-      .from('results')
-      .select('lesson_id, score')
-      .eq('user_id', req.user.id);
-
-    const allLessons = loadLessonsFromFiles();
-    const totalLessons = allLessons.length;
-    const completedLessons = new Set(results?.map(r => r.lesson_id) || []).size;
-    const progressPercent = totalLessons > 0 ? Math.round((completedLessons / totalLessons) * 100) : 0;
-
-    res.json({
-      user: req.user,
-      progress: {
-        completed: completedLessons,
-        total: totalLessons,
-        percent: progressPercent
-      }
-    });
-  } catch (err) {
-    res.status(500).json({ error: 'Ошибка профиля' });
-  }
+  res.json({ user: req.user });
 });
-
-/* === МАРШРУТЫ УРОКОВ И ПРЕДМЕТОВ === */
 
 app.get('/api/subjects', (req, res) => {
   res.json(readJSON('subjects.json'));
@@ -239,24 +207,6 @@ app.get('/api/lessons/:id', (req, res) => {
 
   if (!lesson) return res.status(404).json({ error: 'Урок не найден' });
   res.json(lesson);
-});
-
-app.post('/api/results', authMiddleware, async (req, res) => {
-  const { lessonId, answers, score } = req.body;
-
-  try {
-    const { error } = await supabase.from('results').insert([{
-      user_id: req.user.id,
-      lesson_id: lessonId,
-      answers,
-      score
-    }]);
-
-    if (error) throw error;
-    res.json({ success: true });
-  } catch (err) {
-    res.status(500).json({ error: 'Ошибка сохранения результатов' });
-  }
 });
 
 app.listen(PORT, () => {
