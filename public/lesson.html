@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Урок · Онлайн-школа</title>
+  <link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+  <div class="topbar">
+    <div class="brand"><span class="dot"></span>Школа №1</div>
+    <div class="student-chip" id="studentChip">👋 Гость</div>
+  </div>
+
+  <div class="container">
+    <div class="breadcrumb" id="breadcrumb"><a href="/index.html">← Все предметы</a></div>
+    <h1 class="page-title" id="lessonTitle">Загрузка…</h1>
+    <p class="lesson-desc" id="lessonDesc"></p>
+
+    <div class="video-wrap" id="videoWrap"></div>
+
+    <div class="homework-cta">
+      <div>
+        <h3 style="margin-bottom:6px;">Готов проверить себя?</h3>
+        <p style="color:#6b6280;margin:0;">Домашнее задание: 7 небольших задач по этому уроку.</p>
+      </div>
+      <a class="btn" id="homeworkLink" href="#">Начать домашнее задание →</a>
+    </div>
+  </div>
+
+  <script src="/js/api.js"></script>
+  <script src="/js/lesson.js"></script>
+</body>
+</html>

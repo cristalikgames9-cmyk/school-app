@@ -1,0 +1,12 @@
+{
+  "name": "school-1class",
+  "version": "1.0.0",
+  "description": "Онлайн-школа: 1 класс — видеоуроки и домашние задания",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2"
+  }
+}

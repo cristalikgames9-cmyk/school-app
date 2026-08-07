@@ -1,0 +1,6 @@
+[
+  { "id": "math", "title": "Математика", "icon": "🧮", "color": "#4C6EF5" },
+  { "id": "reading", "title": "Литературное чтение", "icon": "📖", "color": "#F2545B" },
+  { "id": "russian", "title": "Русский язык", "icon": "✏️", "color": "#2EB872" },
+  { "id": "world", "title": "Окружающий мир", "icon": "🌍", "color": "#F5A623" }
+]

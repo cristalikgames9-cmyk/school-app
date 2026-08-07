@@ -1,0 +1,34 @@
+{
+  "math": [
+    {
+      "id": "math-1",
+      "title": "Урок 1. Число и цифра 1",
+      "description": "Учимся считать до одного и узнаём, как выглядит цифра 1.",
+      "videoId": "PASTE_YOUTUBE_ID_HERE"
+    }
+  ],
+  "reading": [
+    {
+      "id": "reading-1",
+      "title": "Урок 1. Звуки и буквы",
+      "description": "Знакомимся с гласными и согласными звуками.",
+      "videoId": "PASTE_YOUTUBE_ID_HERE"
+    }
+  ],
+  "russian": [
+    {
+      "id": "russian-1",
+      "title": "Урок 1. Гласные и согласные звуки",
+      "description": "Учимся различать гласные и согласные звуки в словах.",
+      "videoId": "PASTE_YOUTUBE_ID_HERE"
+    }
+  ],
+  "world": [
+    {
+      "id": "world-1",
+      "title": "Урок 1. Времена года",
+      "description": "Изучаем, чем отличаются зима, весна, лето и осень.",
+      "videoId": "PASTE_YOUTUBE_ID_HERE"
+    }
+  ]
+}
