@@ -4,15 +4,36 @@
   // 1. Проверяем авторизацию
   const authData = await checkAuth();
 
-  if (authData) {
-    const subtitle = document.getElementById('welcomeSubtitle');
-    if (subtitle) subtitle.textContent = 'Привет, ' + authData.user.username + '! Продолжай обучение.';
+  if (authData && authData.user) {
+    // Случайные фразы приветствия
+    const welcomeTitle = document.getElementById('welcomeTitle');
+    if (welcomeTitle) {
+      welcomeTitle.textContent = getRandomGreeting(authData.user.username);
+    }
 
+    // Обновление шкалы и текста прогресса
     const progressBox = document.getElementById('userProgressBox');
     if (progressBox) {
       progressBox.style.display = 'block';
-      document.getElementById('progressText').textContent = authData.progress.completed + ' из ' + authData.progress.total + ' уроков решено';
-      document.getElementById('progressBar').style.width = authData.progress.percent + '%';
+
+      const completed = authData.progress.completed || 0;
+      const total = authData.progress.total || 0;
+      const percent = authData.progress.percent || 0;
+
+      const progressText = document.getElementById('progressText');
+      if (progressText) {
+        progressText.textContent = `${completed} из ${total} уроков решено`;
+      }
+
+      const progressPercent = document.getElementById('progressPercent');
+      if (progressPercent) {
+        progressPercent.textContent = `${percent}%`;
+      }
+
+      const progressBar = document.getElementById('progressBar');
+      if (progressBar) {
+        progressBar.style.width = `${percent}%`;
+      }
     }
   }
 
@@ -42,3 +63,15 @@
     }
   }
 })();
+
+// Функция генерации рандомного приветствия
+function getRandomGreeting(username) {
+  const greetings = [
+    `Пора учиться, ${username}! 🚀`,
+    `Привет, ${username}! 👋`,
+    `С возвращением, ${username}! 📚`,
+    `Отличный день для уроков, ${username}! ✨`,
+    `Продолжай в том же духе, ${username}! 💪`
+  ];
+  return greetings[Math.floor(Math.random() * greetings.length)];
+}

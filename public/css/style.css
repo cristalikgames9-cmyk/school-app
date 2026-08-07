@@ -383,3 +383,53 @@ a { text-decoration: none; color: inherit; }
   .brand .dot { display: none; }
   .container { padding: 24px 16px 60px; }
 }
+/* Блок приветствия */
+.welcome-section {
+  margin-bottom: 32px;
+}
+
+.welcome-title {
+  font-size: 28px;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin-bottom: 12px;
+}
+
+/* Карточка прогресса в стиле сайта */
+.user-progress-box {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 16px 20px;
+  max-width: 480px;
+}
+
+.progress-info {
+  display: flex;
+  justify-content: space-between;
+  font-size: 14px;
+  color: #64748b;
+  font-weight: 500;
+  margin-bottom: 8px;
+}
+
+.progress-percent {
+  color: #4C70FF;
+  font-weight: 600;
+}
+
+/* Полоса прогресса */
+.progress-track {
+  background: #f1f5f9;
+  border-radius: 8px;
+  height: 8px;
+  overflow: hidden;
+  width: 100%;
+}
+
+.progress-bar-fill {
+  background: #4C70FF;
+  height: 100%;
+  border-radius: 8px;
+  transition: width 0.4s ease;
+}
