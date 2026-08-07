@@ -4,51 +4,31 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Школа №1 — Главная</title>
+  <!-- Важно: ведущий слэш /css/style.css -->
   <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
-  <!-- Шапка сайта -->
   <header class="header">
     <div class="header-container">
       <a href="/" class="logo">
-        <span class="dots">
-          <span class="dot blue"></span>
-          <span class="dot red"></span>
-          <span class="dot green"></span>
-        </span>
         <span class="logo-text">Школа №1</span>
       </a>
-      <div class="header-right">
-        <div id="userProfile" class="user-pill" style="display: none;">
-          👋 <span id="usernameDisplay">Пользователь</span>
-        </div>
-        <a id="loginBtn" href="/auth.html" class="btn-auth" style="display: none;">Войти</a>
+      <div id="userBlock" class="user-info">
+        <span id="userName">👋 Гость</span>
       </div>
     </div>
   </header>
 
-  <!-- Главный контент -->
   <main class="main-container">
-    <div class="welcome-section">
-      <!-- Крупный динамический заголовок -->
-      <h1 id="welcomeTitle" class="main-title">Выбери предмет</h1>
-      <p id="welcomeSubtitle" class="main-subtitle">Все уроки и задания за 1 класс собраны здесь</p>
+    <h1 id="welcomeText" class="main-title">Привет!</h1>
+    <p class="subtitle">Все уроки и задания за 1 класс собраны здесь</p>
 
-      <!-- Аккуратный прогресс-бар -->
-      <div id="userProgressBox" class="progress-box" style="display: none;">
-        <div class="progress-info">
-          <span id="progressText">0 из 0 уроков пройдено</span>
-          <span id="progressPercent">0%</span>
-        </div>
-        <div class="progress-track">
-          <div id="progressBar" class="progress-fill" style="width: 0%;"></div>
-        </div>
-      </div>
+    <div id="progressBox" class="progress-card" style="display: none; margin: 16px 0;">
+      <p id="progressText">0 из 0 уроков пройдено 0%</p>
     </div>
 
-    <!-- Сетка предметов -->
-    <div id="subjectsGrid" class="subjects-grid">
-      <!-- Динамически заполняется через index.js -->
+    <div id="subjectsList" class="subjects-grid" style="margin-top: 24px;">
+      <!-- Предметы подгружаются из index.js -->
     </div>
   </main>
 
