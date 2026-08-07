@@ -1,23 +1,33 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Уроки · Онлайн-школа</title>
-  <link rel="stylesheet" href="/css/style.css" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Предмет — Школа №1</title>
+  <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
-  <div class="topbar">
-    <div class="brand"><span class="dot"></span>Школа №1</div>
-    <div class="student-chip" id="studentChip">👋 Гость</div>
-  </div>
+  <header class="header">
+    <div class="header-container">
+      <a href="/" class="logo">
+        <span class="dots">
+          <span class="dot blue"></span>
+          <span class="dot red"></span>
+          <span class="dot green"></span>
+        </span>
+        <span class="logo-text">Школа №1</span>
+      </a>
+    </div>
+  </header>
 
-  <div class="container">
-    <div class="breadcrumb"><a href="/index.html">← Все предметы</a></div>
-    <h1 class="page-title" id="subjectTitle">Загрузка…</h1>
-    <p class="page-subtitle">Выбери урок, чтобы посмотреть видео и выполнить задание</p>
-    <div class="grid" id="lessonsGrid"></div>
-  </div>
+  <main class="main-container">
+    <a href="/" class="back-link">← Все предметы</a>
+    <h1 id="subjectTitle" class="main-title" style="margin-top: 16px;">Загрузка предмета...</h1>
+
+    <div id="lessonsList" class="lessons-list" style="margin-top: 24px;">
+      <!-- Заполняется динамически -->
+    </div>
+  </main>
 
   <script src="/js/api.js"></script>
   <script src="/js/subject.js"></script>

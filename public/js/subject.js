@@ -1,41 +1,35 @@
 (async function () {
-  getStudentId();
-  document.getElementById('studentChip').textContent = getStudentName()
-    ? `👋 ${getStudentName()}`
-    : '👋 Гость';
-
-  const params = new URLSearchParams(location.search);
+  const params = new URLSearchParams(window.location.search);
   const subjectId = params.get('id');
-  const grid = document.getElementById('lessonsGrid');
-  const titleEl = document.getElementById('subjectTitle');
 
   if (!subjectId) {
-    titleEl.textContent = 'Предмет не выбран';
+    window.location.href = '/';
     return;
   }
 
   try {
-    const { subject, lessons } = await api('/subjects/' + subjectId);
-    titleEl.textContent = `${subject.icon} ${subject.title}`;
-    document.documentElement.style.setProperty('--current-accent', subject.color);
+    const res = await fetch(`/api/subjects/${subjectId}`);
+    if (!res.ok) throw new Error('Предмет не найден');
+    const data = await res.json();
 
-    if (lessons.length === 0) {
-      grid.innerHTML = '<div class="empty-state">Уроки скоро появятся 🙂</div>';
+    document.title = `${data.subject.title} — Школа №1`;
+    document.getElementById('subjectTitle').textContent = data.subject.title;
+
+    const listEl = document.getElementById('lessonsList');
+    if (!data.lessons || data.lessons.length === 0) {
+      listEl.innerHTML = '<p class="empty-state">Уроки пока не добавлены 📝</p>';
       return;
     }
 
-    grid.innerHTML = lessons
-      .map(
-        (l, i) => `
-      <a class="cover-card" style="--accent:${subject.color}" href="/lesson.html?id=${l.id}">
-        <div class="sticker">${i + 1}</div>
-        <span class="tag">Урок ${i + 1}</span>
-        <h3>${l.title.replace(/^Урок \d+\.\s*/, '')}</h3>
-        <p>${l.description}</p>
-      </a>`
-      )
+    listEl.innerHTML = data.lessons
+      .map((l, index) => `
+        <a href="/lesson.html?id=${l.id}" class="lesson-card">
+          <div class="lesson-num">Урок ${index + 1}</div>
+          <h3 class="lesson-title">${l.title}</h3>
+        </a>
+      `)
       .join('');
-  } catch (e) {
-    titleEl.textContent = 'Предмет не найден';
+  } catch (err) {
+    document.getElementById('subjectTitle').textContent = 'Ошибка загрузки предмета';
   }
 })();

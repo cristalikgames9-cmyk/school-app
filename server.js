@@ -18,19 +18,17 @@ const supabase = createClient(
   process.env.SUPABASE_KEY || ''
 );
 
-// Middleware
 app.use(express.json());
 app.use(cookieParser());
 app.use(express.static('public'));
 
-// Хелпер чтения JSON
 function readJSON(filename) {
   const filePath = path.join(__dirname, 'data', filename);
   if (!fs.existsSync(filePath)) return [];
   return JSON.parse(fs.readFileSync(filePath, 'utf-8'));
 }
 
-// Парсер текстовых файлов уроков с задачами, картинками и вариантами
+// Загрузка и парсинг всех .txt файлов уроков
 function loadLessonsFromFiles() {
   const lessonsDir = path.join(__dirname, 'data', 'lessons');
   if (!fs.existsSync(lessonsDir)) return [];
@@ -50,9 +48,9 @@ function loadLessonsFromFiles() {
       const content = fs.readFileSync(filePath, 'utf-8');
       const parts = content.split('---').map(p => p.trim());
 
-      // 1. Метаданные (TITLE и VIDEO)
       let title = 'Без названия';
       let video = '';
+
       if (parts[0]) {
         parts[0].split('\n').forEach(line => {
           if (line.startsWith('TITLE:')) title = line.replace('TITLE:', '').trim();
@@ -60,11 +58,9 @@ function loadLessonsFromFiles() {
         });
       }
 
-      // 2. Описание урока
       const description = parts[1] || '';
-
-      // 3. Задачи
       const tasks = [];
+
       if (parts[2]) {
         const rawTasks = parts[2].split(/Q:/g).filter(t => t.trim());
 
@@ -92,7 +88,7 @@ function loadLessonsFromFiles() {
               question,
               image: img || null,
               options,
-              answer // Массив верных ответов
+              answer
             });
           }
         });
@@ -113,7 +109,6 @@ function loadLessonsFromFiles() {
   return lessons;
 }
 
-// Middleware авторизации
 async function authMiddleware(req, res, next) {
   const userId = req.cookies.userId;
   if (!userId) return res.status(401).json({ error: 'Не авторизован' });
@@ -246,15 +241,6 @@ app.get('/api/lessons/:id', (req, res) => {
   res.json(lesson);
 });
 
-app.get('/api/homework/:lessonId', (req, res) => {
-  const allLessons = loadLessonsFromFiles();
-  const lesson = allLessons.find(l => l.id === req.params.lessonId);
-
-  if (!lesson) return res.status(404).json({ error: 'Задание не найдено' });
-  res.json(lesson.tasks);
-});
-
-// Сохранение результатов выполнения
 app.post('/api/results', authMiddleware, async (req, res) => {
   const { lessonId, answers, score } = req.body;
 

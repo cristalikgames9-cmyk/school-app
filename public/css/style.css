@@ -1,218 +1,156 @@
-* {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+/* Навигация и карточки уроков */
+.back-link {
+  color: #4C70FF;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 14px;
 }
 
-body {
-  background-color: #faf9f5;
-  background-image: 
-    linear-gradient(to right, rgba(0, 0, 0, 0.03) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(0, 0, 0, 0.03) 1px, transparent 1px);
-  background-size: 20px 20px;
-  color: #1e293b;
-  min-height: 100vh;
+.lessons-list {
   display: flex;
   flex-direction: column;
+  gap: 12px;
 }
 
-/* Шапка сайта */
-.header {
-  border-bottom: 1px dashed #e2e8f0;
-  background: rgba(255, 255, 255, 0.85);
-  backdrop-filter: blur(8px);
-  padding: 16px 32px;
-}
-
-.header-container {
-  max-width: 1100px;
-  margin: 0 auto;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.logo {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  text-decoration: none;
-  font-weight: 700;
-  font-size: 18px;
-  color: #0f172a;
-}
-
-.dots {
-  display: flex;
-  gap: 4px;
-}
-
-.dot {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-}
-
-.dot.blue { background-color: #3b82f6; }
-.dot.red { background-color: #ef4444; }
-.dot.green { background-color: #10b981; }
-
-.user-pill {
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
-  padding: 8px 16px;
-  border-radius: 20px;
-  font-size: 14px;
-  font-weight: 500;
-  color: #334155;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
-}
-
-.btn-auth {
-  background: #4C70FF;
-  color: #ffffff;
-  padding: 8px 18px;
-  border-radius: 20px;
-  text-decoration: none;
-  font-size: 14px;
-  font-weight: 600;
-}
-
-/* Контейнер */
-.main-container {
-  max-width: 1100px;
-  width: 100%;
-  margin: 40px auto;
-  padding: 0 20px;
-}
-
-/* Блок приветствия */
-.welcome-section {
-  margin-bottom: 32px;
-}
-
-.main-title {
-  font-size: 32px;
-  font-weight: 800;
-  color: #0f172a;
-  margin-bottom: 6px;
-}
-
-.main-subtitle {
-  color: #64748b;
-  font-size: 15px;
-  margin-bottom: 18px;
-}
-
-/* Сдержанный прогресс-бар */
-.progress-box {
+.lesson-card {
   background: #ffffff;
   border: 1px solid #e2e8f0;
   border-radius: 12px;
-  padding: 12px 16px;
-  max-width: 380px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
-}
-
-.progress-info {
-  display: flex;
-  justify-content: space-between;
-  font-size: 13px;
-  font-weight: 600;
-  color: #475569;
-  margin-bottom: 8px;
-}
-
-#progressPercent {
-  color: #4C70FF;
-}
-
-.progress-track {
-  width: 100%;
-  height: 6px;
-  background: #f1f5f9;
-  border-radius: 10px;
-  overflow: hidden;
-}
-
-.progress-fill {
-  height: 100%;
-  background: #4C70FF;
-  border-radius: 10px;
-  transition: width 0.4s ease-in-out;
-}
-
-/* Сетка предметов */
-.subjects-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-  gap: 20px;
-}
-
-.cover-card {
-  background: #ffffff;
-  border-radius: 18px;
-  padding: 24px 20px;
+  padding: 16px 20px;
   text-decoration: none;
   color: #0f172a;
-  position: relative;
-  border: 1px solid #e2e8f0;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
   display: flex;
-  flex-direction: column;
-  justify-content: flex-end;
-  min-height: 160px;
-  overflow: hidden;
+  align-items: center;
+  gap: 16px;
 }
 
-.cover-card::before {
-  content: '';
+.lesson-card:hover {
+  transform: translateX(4px);
+  border-color: #cbd5e1;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+}
+
+.lesson-num {
+  font-size: 12px;
+  font-weight: 700;
+  color: #4C70FF;
+  text-transform: uppercase;
+  background: #eff6ff;
+  padding: 4px 8px;
+  border-radius: 6px;
+}
+
+.lesson-title {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+/* Видеоплеер */
+.video-container {
+  position: relative;
+  padding-bottom: 56.25%; /* 16:9 */
+  height: 0;
+  overflow: hidden;
+  border-radius: 14px;
+  margin: 20px 0;
+  background: #000;
+}
+
+.video-container iframe {
   position: absolute;
   top: 0;
   left: 0;
-  right: 0;
-  height: 8px;
-  background: var(--accent, #4C70FF);
+  width: 100%;
+  height: 100%;
+  border: 0;
 }
 
-.cover-card:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.06);
+/* Текст урока */
+.lesson-text {
+  font-size: 16px;
+  line-height: 1.6;
+  color: #334155;
+  background: #ffffff;
+  padding: 20px;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  margin-bottom: 28px;
+  white-space: pre-line;
 }
 
-.sticker {
-  position: absolute;
-  top: 16px;
-  right: 16px;
-  width: 42px;
-  height: 42px;
-  background: #f8fafc;
-  border-radius: 50%;
+/* Карточки заданий */
+.tasks-header {
+  font-size: 22px;
+  font-weight: 700;
+  margin-bottom: 16px;
+}
+
+.task-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 16px;
+}
+
+.task-question {
+  font-size: 16px;
+  margin-bottom: 12px;
+}
+
+.task-image {
+  max-width: 100%;
+  max-height: 300px;
+  border-radius: 8px;
+  margin: 8px 0 16px 0;
+  object-fit: contain;
+}
+
+.options-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.option-label {
   display: flex;
   align-items: center;
-  justify-content: center;
-  font-size: 20px;
+  gap: 10px;
+  font-size: 15px;
+  cursor: pointer;
+  padding: 8px 12px;
+  border-radius: 8px;
+  background: #f8fafc;
+  border: 1px solid #f1f5f9;
 }
 
-.tag {
-  font-size: 11px;
-  font-weight: 700;
-  text-transform: uppercase;
-  color: var(--accent, #4C70FF);
-  letter-spacing: 0.5px;
-  margin-bottom: 6px;
+.option-label:hover {
+  background: #f1f5f9;
 }
 
-.cover-card h3 {
-  font-size: 18px;
-  font-weight: 700;
+.btn-check {
+  background: #4C70FF;
+  color: #ffffff;
+  border: none;
+  padding: 8px 18px;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  font-size: 14px;
 }
 
-.empty-state {
-  grid-column: 1 / -1;
-  text-align: center;
-  padding: 40px;
-  color: #94a3b8;
+.btn-check:hover {
+  background: #3b5bdb;
 }
+
+.status-msg {
+  margin-top: 12px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.msg.success { color: #16a34a; }
+.msg.warning { color: #d97706; }
+.msg.error { color: #dc2626; }
