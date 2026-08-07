@@ -9,9 +9,12 @@ const fs = require('fs');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Инициализация Supabase
+// Очистка URL от лишних слэшей и /rest/v1/
+const rawUrl = process.env.SUPABASE_URL || '';
+const cleanUrl = rawUrl.replace(/\/rest\/v1\/?$/, '').replace(/\/+$/, '');
+
 const supabase = createClient(
-  process.env.SUPABASE_URL || '',
+  cleanUrl,
   process.env.SUPABASE_KEY || ''
 );
 
@@ -20,14 +23,97 @@ app.use(express.json());
 app.use(cookieParser());
 app.use(express.static('public'));
 
-// Хелпер чтения статических JSON-файлов
+// Хелпер чтения JSON
 function readJSON(filename) {
   const filePath = path.join(__dirname, 'data', filename);
   if (!fs.existsSync(filePath)) return [];
   return JSON.parse(fs.readFileSync(filePath, 'utf-8'));
 }
 
-// Middleware аутентификации по кукам
+// Парсер текстовых файлов уроков с задачами, картинками и вариантами
+function loadLessonsFromFiles() {
+  const lessonsDir = path.join(__dirname, 'data', 'lessons');
+  if (!fs.existsSync(lessonsDir)) return [];
+
+  const lessons = [];
+  const subjects = fs.readdirSync(lessonsDir);
+
+  subjects.forEach(subjectId => {
+    const subjectPath = path.join(lessonsDir, subjectId);
+    if (!fs.statSync(subjectPath).isDirectory()) return;
+
+    const files = fs.readdirSync(subjectPath);
+    files.forEach(file => {
+      if (!file.endsWith('.txt')) return;
+
+      const filePath = path.join(subjectPath, file);
+      const content = fs.readFileSync(filePath, 'utf-8');
+      const parts = content.split('---').map(p => p.trim());
+
+      // 1. Метаданные (TITLE и VIDEO)
+      let title = 'Без названия';
+      let video = '';
+      if (parts[0]) {
+        parts[0].split('\n').forEach(line => {
+          if (line.startsWith('TITLE:')) title = line.replace('TITLE:', '').trim();
+          if (line.startsWith('VIDEO:')) video = line.replace('VIDEO:', '').trim();
+        });
+      }
+
+      // 2. Описание урока
+      const description = parts[1] || '';
+
+      // 3. Задачи
+      const tasks = [];
+      if (parts[2]) {
+        const rawTasks = parts[2].split(/Q:/g).filter(t => t.trim());
+
+        rawTasks.forEach((taskBlock, index) => {
+          const lines = taskBlock.trim().split('\n');
+          const question = lines[0] ? lines[0].trim() : '';
+          let img = '';
+          let options = [];
+          let answer = [];
+
+          lines.slice(1).forEach(line => {
+            const trimmed = line.trim();
+            if (trimmed.startsWith('IMG:')) {
+              img = trimmed.replace('IMG:', '').trim();
+            } else if (trimmed.startsWith('O:')) {
+              options = trimmed.replace('O:', '').split('|').map(o => o.trim());
+            } else if (trimmed.startsWith('A:')) {
+              answer = trimmed.replace('A:', '').split('|').map(a => a.trim());
+            }
+          });
+
+          if (question) {
+            tasks.push({
+              id: index + 1,
+              question,
+              image: img || null,
+              options,
+              answer // Массив верных ответов
+            });
+          }
+        });
+      }
+
+      const lessonId = `${subjectId}_${file.replace('.txt', '')}`;
+      lessons.push({
+        id: lessonId,
+        subjectId,
+        title,
+        video,
+        description,
+        tasks
+      });
+    });
+  });
+
+  return lessons;
+}
+
+// Middleware авторизации
 async function authMiddleware(req, res, next) {
   const userId = req.cookies.userId;
   if (!userId) return res.status(401).json({ error: 'Не авторизован' });
@@ -48,20 +134,17 @@ async function authMiddleware(req, res, next) {
   }
 }
 
-/* === МАРШРУТЫ АВТОРИЗАЦИИ (AUTH) === */
+/* === МАРШРУТЫ АВТОРИЗАЦИИ === */
 
-// Регистрация
 app.post('/api/auth/register', async (req, res) => {
   const { username, password } = req.body;
 
-  if (!username || !password) {
-    return res.status(400).json({ error: 'Заполните все поля' });
-  }
+  if (!username || !password) return res.status(400).json({ error: 'Заполните все поля' });
   if (!/^[a-zA-Z0-9_]+$/.test(username)) {
-    return res.status(400).json({ error: 'Имя должно содержать только английские буквы и цифры' });
+    return res.status(400).json({ error: 'Имя только латиницей и цифрами' });
   }
   if (!/^[a-zA-Z0-9]{4,12}$/.test(password)) {
-    return res.status(400).json({ error: 'Пароль должен содержать от 4 до 12 символов (буквы/цифры)' });
+    return res.status(400).json({ error: 'Пароль от 4 до 12 символов' });
   }
 
   try {
@@ -74,34 +157,19 @@ app.post('/api/auth/register', async (req, res) => {
       .single();
 
     if (error) {
-      console.error('Детали ошибки Supabase:', error);
-      if (error.code === '23505') {
-        return res.status(400).json({ error: 'Пользователь с таким именем уже существует' });
-      }
-      return res.status(500).json({ error: error.message || 'Ошибка базы данных' });
+      if (error.code === '23505') return res.status(400).json({ error: 'Пользователь уже существует' });
+      return res.status(500).json({ error: error.message });
     }
 
-    // Установка куки на 30 дней
-    res.cookie('userId', data.id, {
-      maxAge: 30 * 24 * 60 * 60 * 1000,
-      httpOnly: true,
-      sameSite: 'lax'
-    });
-
+    res.cookie('userId', data.id, { maxAge: 30 * 24 * 60 * 60 * 1000, httpOnly: true, sameSite: 'lax' });
     res.json({ id: data.id, username: data.username });
   } catch (err) {
-    console.error('Системная ошибка регистрации:', err);
     res.status(500).json({ error: err.message });
   }
 });
 
-// Вход в аккаунт
 app.post('/api/auth/login', async (req, res) => {
   const { username, password } = req.body;
-
-  if (!username || !password) {
-    return res.status(400).json({ error: 'Заполните все поля' });
-  }
 
   try {
     const { data: user, error } = await supabase
@@ -110,35 +178,23 @@ app.post('/api/auth/login', async (req, res) => {
       .eq('username', username)
       .single();
 
-    if (error || !user) {
-      return res.status(400).json({ error: 'Неверное имя пользователя или пароль' });
-    }
+    if (error || !user) return res.status(400).json({ error: 'Неверные данные' });
 
     const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) {
-      return res.status(400).json({ error: 'Неверное имя пользователя или пароль' });
-    }
+    if (!isMatch) return res.status(400).json({ error: 'Неверные данные' });
 
-    res.cookie('userId', user.id, {
-      maxAge: 30 * 24 * 60 * 60 * 1000,
-      httpOnly: true,
-      sameSite: 'lax'
-    });
-
+    res.cookie('userId', user.id, { maxAge: 30 * 24 * 60 * 60 * 1000, httpOnly: true, sameSite: 'lax' });
     res.json({ id: user.id, username: user.username });
   } catch (err) {
-    console.error('Ошибка входа:', err);
-    res.status(500).json({ error: 'Ошибка сервера при входе' });
+    res.status(500).json({ error: 'Ошибка входа' });
   }
 });
 
-// Выход
 app.post('/api/auth/logout', (req, res) => {
   res.clearCookie('userId');
   res.json({ success: true });
 });
 
-// Данные профиля и прогресс
 app.get('/api/auth/me', authMiddleware, async (req, res) => {
   try {
     const { data: results } = await supabase
@@ -146,8 +202,8 @@ app.get('/api/auth/me', authMiddleware, async (req, res) => {
       .select('lesson_id, score')
       .eq('user_id', req.user.id);
 
-    const lessons = readJSON('lessons.json');
-    const totalLessons = lessons.length;
+    const allLessons = loadLessonsFromFiles();
+    const totalLessons = allLessons.length;
     const completedLessons = new Set(results?.map(r => r.lesson_id) || []).size;
     const progressPercent = totalLessons > 0 ? Math.round((completedLessons / totalLessons) * 100) : 0;
 
@@ -160,43 +216,45 @@ app.get('/api/auth/me', authMiddleware, async (req, res) => {
       }
     });
   } catch (err) {
-    console.error('Ошибка получения /me:', err);
-    res.status(500).json({ error: 'Ошибка получения профиля' });
+    res.status(500).json({ error: 'Ошибка профиля' });
   }
 });
 
-/* === МАРШРУТЫ КОНТЕНТА === */
+/* === МАРШРУТЫ УРОКОВ И ПРЕДМЕТОВ === */
 
-// Список предметов
 app.get('/api/subjects', (req, res) => {
   res.json(readJSON('subjects.json'));
 });
 
-// Предмет по ID + уроки
 app.get('/api/subjects/:id', (req, res) => {
   const subjects = readJSON('subjects.json');
-  const lessons = readJSON('lessons.json');
   const subject = subjects.find(s => s.id === req.params.id);
 
   if (!subject) return res.status(404).json({ error: 'Предмет не найден' });
-  res.json({ subject, lessons: lessons.filter(l => l.subjectId === req.params.id) });
+
+  const allLessons = loadLessonsFromFiles();
+  const subjectLessons = allLessons.filter(l => l.subjectId === req.params.id);
+
+  res.json({ subject, lessons: subjectLessons });
 });
 
-// Урок по ID
 app.get('/api/lessons/:id', (req, res) => {
-  const lesson = readJSON('lessons.json').find(l => l.id === req.params.id);
+  const allLessons = loadLessonsFromFiles();
+  const lesson = allLessons.find(l => l.id === req.params.id);
+
   if (!lesson) return res.status(404).json({ error: 'Урок не найден' });
   res.json(lesson);
 });
 
-// Домашнее задание по ID урока
 app.get('/api/homework/:lessonId', (req, res) => {
-  const hw = readJSON('homeworks.json').find(h => h.lessonId === req.params.lessonId);
-  if (!hw) return res.status(404).json({ error: 'Задание не найдено' });
-  res.json(hw.tasks);
+  const allLessons = loadLessonsFromFiles();
+  const lesson = allLessons.find(l => l.id === req.params.lessonId);
+
+  if (!lesson) return res.status(404).json({ error: 'Задание не найдено' });
+  res.json(lesson.tasks);
 });
 
-// Сохранение результатов в Supabase
+// Сохранение результатов выполнения
 app.post('/api/results', authMiddleware, async (req, res) => {
   const { lessonId, answers, score } = req.body;
 
@@ -211,8 +269,7 @@ app.post('/api/results', authMiddleware, async (req, res) => {
     if (error) throw error;
     res.json({ success: true });
   } catch (err) {
-    console.error('Ошибка сохранения результата:', err);
-    res.status(500).json({ error: 'Не удалось сохранить результат' });
+    res.status(500).json({ error: 'Ошибка сохранения результатов' });
   }
 });
 
