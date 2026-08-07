@@ -1,85 +1,41 @@
 (async function () {
-  const grid = document.getElementById('subjectsGrid');
-  const userProfile = document.getElementById('userProfile');
-  const usernameDisplay = document.getElementById('usernameDisplay');
-  const loginBtn = document.getElementById('loginBtn');
-
-  // 1. Проверяем авторизацию пользователя
   try {
-    const authData = await checkAuth();
-
-    if (authData && authData.user) {
-      // Обновляем шапку
-      if (userProfile && usernameDisplay) {
-        usernameDisplay.textContent = authData.user.username;
-        userProfile.style.display = 'inline-flex';
-      }
-
-      // Генерация динамического заглавного приветствия
-      const titleEl = document.getElementById('welcomeTitle');
-      if (titleEl) {
-        titleEl.textContent = getRandomGreeting(authData.user.username);
-      }
-
-      // Заполнение и отображение бара прогресса
-      const progressBox = document.getElementById('userProgressBox');
-      if (progressBox && authData.progress) {
-        progressBox.style.display = 'block';
-
-        const completed = authData.progress.completed || 0;
-        const total = authData.progress.total || 0;
-        const percent = authData.progress.percent || 0;
-
-        const textEl = document.getElementById('progressText');
-        const percentEl = document.getElementById('progressPercent');
-        const barEl = document.getElementById('progressBar');
-
-        if (textEl) textEl.textContent = `${completed} из ${total} уроков пройдено`;
-        if (percentEl) percentEl.textContent = `${percent}%`;
-        if (barEl) barEl.style.width = `${percent}%`;
-      }
-    } else {
-      if (loginBtn) loginBtn.style.display = 'inline-block';
+    // 1. Проверка авторизации
+    const meRes = await fetch('/api/auth/me');
+    if (meRes.ok) {
+      const { user } = await meRes.json();
+      const userNameEl = document.getElementById('userName');
+      const welcomeEl = document.getElementById('welcomeText');
+      if (userNameEl) userNameEl.textContent = `👋 ${user.username}`;
+      if (welcomeEl) welcomeEl.textContent = `Привет, ${user.username}!`;
     }
-  } catch (err) {
-    console.log('Пользователь не авторизован');
-    if (loginBtn) loginBtn.style.display = 'inline-block';
-  }
 
-  // 2. Загружаем предметы из API
-  try {
-    const subjects = await api('/subjects');
+    // 2. Загрузка списка предметов
+    const res = await fetch('/api/subjects');
+    if (!res.ok) throw new Error('Ошибка загрузки');
+    const subjects = await res.json();
+
+    const gridEl = document.getElementById('subjectsList');
+    if (!gridEl) return;
 
     if (!subjects || subjects.length === 0) {
-      if (grid) grid.innerHTML = '<div class="empty-state">Предметы не найдены</div>';
+      gridEl.innerHTML = '<p class="subtitle">Предметы пока не добавлены</p>';
       return;
     }
 
-    if (grid) {
-      grid.innerHTML = subjects
-        .map(s => `
-          <a class="cover-card" style="--accent:${s.color}" href="/subject.html?id=${s.id}">
-            <div class="sticker">${s.icon}</div>
-            <span class="tag">1 класс</span>
-            <h3>${s.title}</h3>
-          </a>
-        `)
-        .join('');
-    }
-  } catch (e) {
-    console.error('Ошибка загрузки предметов:', e);
-    if (grid) grid.innerHTML = '<div class="empty-state">Ошибка загрузки предметов</div>';
+    // Рендерим карточки с правильными классами для CSS
+    gridEl.innerHTML = subjects
+      .map(
+        (s) => `
+        <a href="/subject.html?id=${s.id}" class="subject-card">
+          <div style="font-size: 32px; margin-bottom: 8px;">${s.icon || '📚'}</div>
+          <h3 style="font-size: 18px; font-weight: 700; color: #0f172a; margin-bottom: 4px;">${s.title}</h3>
+          <span style="font-size: 13px; color: #64748b;">${s.grade || '1 класс'}</span>
+        </a>
+      `
+      )
+      .join('');
+  } catch (err) {
+    console.error('Ошибка:', err);
   }
 })();
-
-// Рандомные варианты приветствия
-function getRandomGreeting(username) {
-  const greetings = [
-    `Пора учиться, ${username}!`,
-    `Привет, ${username}!`,
-    `С возвращением, ${username}!`,
-    `Отличный день для уроков, ${username}!`,
-    `Продолжай в том же духе, ${username}!`
-  ];
-  return greetings[Math.floor(Math.random() * greetings.length)];
-}
