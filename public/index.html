@@ -1,22 +1,56 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Онлайн-школа · 1 класс</title>
-  <link rel="stylesheet" href="/css/style.css" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Школа №1 — Главная</title>
+  <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
-  <div class="topbar">
-    <div class="brand"><span class="dot"></span>Школа №1</div>
-    <div class="student-chip" id="studentChip">👋 Гость</div>
-  </div>
+  <!-- Шапка сайта -->
+  <header class="header">
+    <div class="header-container">
+      <a href="/" class="logo">
+        <span class="dots">
+          <span class="dot blue"></span>
+          <span class="dot red"></span>
+          <span class="dot green"></span>
+        </span>
+        <span class="logo-text">Школа №1</span>
+      </a>
+      <div class="header-right">
+        <div id="userProfile" class="user-pill" style="display: none;">
+          👋 <span id="usernameDisplay">Пользователь</span>
+        </div>
+        <a id="loginBtn" href="/auth.html" class="btn-auth" style="display: none;">Войти</a>
+      </div>
+    </div>
+  </header>
 
-  <div class="container">
-    <h1 class="page-title">Выбери предмет</h1>
-    <p class="page-subtitle">Все уроки и задания за 1 класс собраны здесь</p>
-    <div class="grid" id="subjectsGrid"></div>
-  </div>
+  <!-- Главный контент -->
+  <main class="main-container">
+    <div class="welcome-section">
+      <!-- Крупный динамический заголовок -->
+      <h1 id="welcomeTitle" class="main-title">Выбери предмет</h1>
+      <p id="welcomeSubtitle" class="main-subtitle">Все уроки и задания за 1 класс собраны здесь</p>
+
+      <!-- Аккуратный прогресс-бар -->
+      <div id="userProgressBox" class="progress-box" style="display: none;">
+        <div class="progress-info">
+          <span id="progressText">0 из 0 уроков пройдено</span>
+          <span id="progressPercent">0%</span>
+        </div>
+        <div class="progress-track">
+          <div id="progressBar" class="progress-fill" style="width: 0%;"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Сетка предметов -->
+    <div id="subjectsGrid" class="subjects-grid">
+      <!-- Динамически заполняется через index.js -->
+    </div>
+  </main>
 
   <script src="/js/api.js"></script>
   <script src="/js/index.js"></script>
