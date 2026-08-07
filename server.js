@@ -20,7 +20,7 @@ const supabase = createClient(
 
 app.use(express.json());
 app.use(cookieParser());
-app.use(express.static('public'));
+app.use(express.static(path.join(__dirname, 'public')));
 
 function readJSON(filename) {
   const filePath = path.join(__dirname, 'data', filename);
