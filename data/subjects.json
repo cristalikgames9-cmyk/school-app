@@ -1,6 +1,38 @@
 [
-  { "id": "math", "title": "Математика", "icon": "🧮", "color": "#4C6EF5" },
-  { "id": "reading", "title": "Литературное чтение", "icon": "📖", "color": "#F2545B" },
-  { "id": "russian", "title": "Русский язык", "icon": "✏️", "color": "#2EB872" },
-  { "id": "world", "title": "Окружающий мир", "icon": "🌍", "color": "#F5A623" }
+  {
+    "id": "russian",
+    "title": "Русский язык",
+    "icon": "✏️",
+    "grade": "1 класс"
+  },
+  {
+    "id": "math",
+    "title": "Математика",
+    "icon": "📐",
+    "grade": "1 класс"
+  },
+  {
+    "id": "lit",
+    "title": "Литературное чтение",
+    "icon": "📖",
+    "grade": "1 класс"
+  },
+  {
+    "id": "world",
+    "title": "Окружающий мир",
+    "icon": "🌍",
+    "grade": "1 класс"
+  },
+  {
+    "id": "izo",
+    "title": "ИЗО",
+    "icon": "🎨",
+    "grade": "1 класс"
+  },
+  {
+    "id": "training",
+    "title": "Физическая культура",
+    "icon": "⚽",
+    "grade": "1 класс"
+  }
 ]
