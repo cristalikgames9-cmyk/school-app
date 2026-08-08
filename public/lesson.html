@@ -25,7 +25,46 @@
     </div>
 
     <div id="lessonDescription" class="lesson-text"></div>
-    <div id="tasksSection" class="tasks-section"></div>
+    <!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Урок — Школа №1</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <header class="header">
+    <div class="header-container">
+      <a href="/" class="logo"><span class="logo-text">Школа №1</span></a>
+    </div>
+  </header>
+
+  <main class="main-container">
+    <a href="javascript:history.back()" class="back-link">← Назад</a>
+    
+    <h1 id="lessonTitle" class="main-title" style="margin-top: 16px;">Загрузка урока...</h1>
+
+    <div class="video-container" id="videoBox" style="display: none;">
+      <iframe id="lessonVideo" src="" frameborder="0" allowfullscreen></iframe>
+    </div>
+
+    <div id="lessonDescription" class="lesson-text"></div>
+
+    <!-- Карточка перехода к ДЗ -->
+    <div class="hw-banner-card">
+      <div class="hw-banner-info">
+        <h3>Домашнее задание</h3>
+        <p id="hwStatsText">Проверьте знания по пройденному материалу</p>
+      </div>
+      <a id="hwBtn" href="#" class="btn-primary">Перейти к ДЗ →</a>
+    </div>
+  </main>
+
+  <script src="/js/api.js"></script>
+  <script src="/js/lesson.js"></script>
+</body>
+</html>
   </main>
 
   <script src="/js/api.js"></script>

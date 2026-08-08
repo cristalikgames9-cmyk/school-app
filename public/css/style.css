@@ -248,3 +248,103 @@ body {
 .msg.success { color: #16a34a; }
 .msg.warning { color: #d97706; }
 .msg.error { color: #dc2626; }
+/* Домашнее задание и Баннеры */
+.hw-banner-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+}
+
+.hw-banner-info h3 { font-size: 20px; font-weight: 700; margin-bottom: 4px; }
+.hw-banner-info p { color: #64748b; font-size: 14px; }
+
+.btn-primary {
+  background: #4C70FF;
+  color: #fff;
+  padding: 10px 20px;
+  border-radius: 8px;
+  text-decoration: none;
+  font-weight: 600;
+  display: inline-block;
+  border: none;
+  cursor: pointer;
+}
+.btn-primary:hover { background: #3b5bdb; }
+
+.btn-secondary {
+  background: #f1f5f9;
+  color: #334155;
+  padding: 8px 16px;
+  border-radius: 8px;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+/* Сетка интерфейса ДЗ */
+.hw-page-container { max-width: 1000px; }
+.hw-layout {
+  display: grid;
+  grid-template-columns: 240px 1fr;
+  gap: 24px;
+}
+
+.hw-sidebar {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 16px;
+  height: fit-content;
+}
+
+.sidebar-title { font-size: 16px; font-weight: 700; margin-bottom: 12px; color: #475569; }
+
+.questions-nav-list { display: flex; flex-direction: column; gap: 8px; }
+
+.nav-q-btn {
+  width: 100%;
+  text-align: left;
+  padding: 10px 14px;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  background: #f8fafc;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+  color: #334155;
+}
+
+.nav-q-btn:hover { background: #f1f5f9; }
+.nav-q-btn.active { border-color: #4C70FF; background: #eff6ff; color: #4C70FF; }
+
+/* Цветные статусы кнопок сбоку */
+.nav-q-btn.status-correct { background: #f0fdf4; border-color: #bbf7d0; color: #166534; }
+.nav-q-btn.status-partial { background: #fefce8; border-color: #fef08a; color: #854d0e; }
+.nav-q-btn.status-incorrect { background: #fef2f2; border-color: #fecaca; color: #991b1b; }
+
+/* Баннеры со статусом решения */
+.status-badge-box {
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 700;
+}
+.status-badge-box.correct { background: #dcfce7; color: #15803d; }
+.status-badge-box.partial { background: #fef9c3; color: #a16207; }
+.status-badge-box.incorrect { background: #fee2e2; color: #b91c1c; }
+
+.task-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.option-label.disabled { cursor: not-allowed; opacity: 0.8; }
+.locked-msg { color: #64748b; font-size: 14px; font-weight: 600; }

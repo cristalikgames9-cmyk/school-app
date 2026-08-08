@@ -7,6 +7,9 @@
     return;
   }
 
+  const hwBtn = document.getElementById('hwBtn');
+  if (hwBtn) hwBtn.href = `/homework.html?id=${lessonId}`;
+
   try {
     const res = await fetch(`/api/lessons/${lessonId}`);
     if (!res.ok) throw new Error('Урок не найден');
@@ -14,67 +17,30 @@
 
     document.title = `${lesson.title} — Школа №1`;
     document.getElementById('lessonTitle').textContent = lesson.title;
-    document.getElementById('lessonDescription').textContent = lesson.description;
+    document.getElementById('lessonDescription').textContent = lesson.description || '';
 
     if (lesson.video) {
-      document.getElementById('lessonVideo').src = lesson.video;
       document.getElementById('videoBox').style.display = 'block';
+      document.getElementById('lessonVideo').src = lesson.video;
     }
 
-    renderTasks(lesson.tasks);
+    // Загружаем статистику ДЗ
+    const hwRes = await fetch(`/api/homework/${lessonId}`);
+    if (hwRes.ok) {
+      const hwData = await hwRes.json();
+      const saved = hwData.savedAnswers || [];
+      const total = hwData.tasks ? hwData.tasks.length : 0;
+
+      if (saved.length > 0) {
+        const correct = saved.filter(a => a.status === 'correct').length;
+        const partial = saved.filter(a => a.status === 'partial').length;
+        const incorrect = saved.filter(a => a.status === 'incorrect').length;
+
+        document.getElementById('hwStatsText').innerHTML = 
+          `Выполнено: <b>${saved.length}/${total}</b> | ✅ Верно: <b>${correct}</b> | ⚠️ Частично: <b>${partial}</b> | ❌ Неверно: <b>${incorrect}</b>`;
+      }
+    }
   } catch (err) {
-    document.getElementById('lessonTitle').textContent = 'Урок не найден';
+    document.getElementById('lessonTitle').textContent = 'Ошибка загрузки урока';
   }
 })();
-
-function renderTasks(tasks) {
-  const container = document.getElementById('tasksSection');
-  if (!tasks || tasks.length === 0) return;
-
-  let html = '<h2 class="tasks-header">Домашнее задание</h2>';
-
-  tasks.forEach((t, i) => {
-    const isMultiple = t.answer.length > 1;
-    const inputType = isMultiple ? 'checkbox' : 'radio';
-
-    html += `
-      <div class="task-card" id="task-${i}">
-        <p class="task-question"><strong>№${i + 1}. ${t.question}</strong></p>
-        ${t.image ? `<img src="${t.image}" class="task-image" alt="Иллюстрация">` : ''}
-        <div class="options-list">
-          ${t.options.map(opt => `
-            <label class="option-label">
-              <input type="${inputType}" name="q${i}" value="${opt}">
-              <span>${opt}</span>
-            </label>
-          `).join('')}
-        </div>
-        <button class="btn-check" onclick="checkTask(${i}, ${JSON.stringify(t.answer).replace(/"/g, '&quot;')})">Проверить</button>
-        <div id="result-${i}" class="status-msg"></div>
-      </div>
-    `;
-  });
-
-  container.innerHTML = html;
-}
-
-function checkTask(index, correctAnswers) {
-  const selected = Array.from(document.querySelectorAll(`input[name="q${index}"]:checked`)).map(el => el.value);
-  const resultDiv = document.getElementById(`result-${index}`);
-
-  if (selected.length === 0) {
-    resultDiv.innerHTML = '<span class="msg warning">Выберите хотя бы один вариант!</span>';
-    return;
-  }
-
-  const isExact = selected.length === correctAnswers.length && selected.every(val => correctAnswers.includes(val));
-  const isPartial = !isExact && selected.some(val => correctAnswers.includes(val));
-
-  if (isExact) {
-    resultDiv.innerHTML = '<span class="msg success">Правильно! 🎉</span>';
-  } else if (isPartial) {
-    resultDiv.innerHTML = '<span class="msg warning">Частично правильно ⚠️</span>';
-  } else {
-    resultDiv.innerHTML = '<span class="msg error">Неправильно ❌</span>';
-  }
-}

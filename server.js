@@ -212,3 +212,55 @@ app.get('/api/lessons/:id', (req, res) => {
 app.listen(PORT, () => {
   console.log(`Сервер запущен на порту ${PORT}`);
 });
+/* === МАРШРУТЫ ДЗ === */
+app.get('/homework.html', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'homework.html'));
+});
+
+// Получить вопросы ДЗ и сохраненный прогресс
+app.get('/api/homework/:lessonId', authMiddleware, async (req, res) => {
+  const { lessonId } = req.params;
+  const allLessons = loadLessonsFromFiles();
+  const lesson = allLessons.find(l => l.id === lessonId);
+
+  if (!lesson) return res.status(404).json({ error: 'Урок не найден' });
+
+  try {
+    const { data: savedAnswers } = await supabase
+      .from('homework_results')
+      .select('*')
+      .eq('user_id', String(req.user.id))
+      .eq('lesson_id', lessonId);
+
+    res.json({
+      lessonTitle: lesson.title,
+      tasks: lesson.tasks || [],
+      savedAnswers: savedAnswers || []
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Сохранить ответ на вопрос
+app.post('/api/homework/:lessonId/submit', authMiddleware, async (req, res) => {
+  const { lessonId } = req.params;
+  const { questionId, status, selectedOptions } = req.body;
+
+  try {
+    const { error } = await supabase
+      .from('homework_results')
+      .upsert({
+        user_id: String(req.user.id),
+        lesson_id: lessonId,
+        question_id: Number(questionId),
+        status: status, // 'correct', 'partial', 'incorrect'
+        selected_options: selectedOptions
+      }, { onConflict: 'user_id,lesson_id,question_id' });
+
+    if (error) throw error;
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});

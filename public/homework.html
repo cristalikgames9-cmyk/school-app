@@ -1,25 +1,35 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Домашнее задание · Онлайн-школа</title>
-  <link rel="stylesheet" href="/css/style.css" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Домашнее задание — Школа №1</title>
+  <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
-  <div class="topbar">
-    <div class="brand"><span class="dot"></span>Школа №1</div>
-    <div class="student-chip" id="studentChip">👋 Гость</div>
-  </div>
+  <header class="header">
+    <div class="header-container">
+      <a href="/" class="logo"><span class="logo-text">Школа №1</span></a>
+      <a id="exitBtn" href="#" class="btn-secondary">← Выйти к уроку</a>
+    </div>
+  </header>
 
-  <div class="container">
-    <div class="breadcrumb" id="breadcrumb"><a href="/index.html">← Все предметы</a></div>
-    <h1 class="page-title">Домашнее задание</h1>
-    <p class="page-subtitle">Реши все 7 задач по порядку</p>
+  <main class="main-container hw-page-container">
+    <div class="hw-layout">
+      <!-- Боковое меню с кнопками вопросов -->
+      <aside class="hw-sidebar">
+        <h3 class="sidebar-title">Вопросы</h3>
+        <div id="questionsNav" class="questions-nav-list"></div>
+      </aside>
 
-    <div id="progressTrack" class="progress-track"></div>
-    <div id="app"></div>
-  </div>
+      <!-- Область решения текущего вопроса -->
+      <section class="hw-workspace">
+        <div id="questionContent" class="task-card">
+          <p class="subtitle">Загрузка вопросов...</p>
+        </div>
+      </section>
+    </div>
+  </main>
 
   <script src="/js/api.js"></script>
   <script src="/js/homework.js"></script>

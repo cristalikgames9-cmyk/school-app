@@ -1,244 +1,162 @@
 (async function () {
-  getStudentId();
-  document.getElementById('studentChip').textContent = getStudentName()
-    ? `👋 ${getStudentName()}`
-    : '👋 Гость';
-
-  const params = new URLSearchParams(location.search);
-  const lessonId = params.get('lesson');
-  const app = document.getElementById('app');
-  const progressTrack = document.getElementById('progressTrack');
+  const params = new URLSearchParams(window.location.search);
+  const lessonId = params.get('id');
 
   if (!lessonId) {
-    app.innerHTML = '<div class="empty-state">Урок не указан</div>';
+    window.location.href = '/';
     return;
   }
 
-  let lesson, tasks;
+  document.getElementById('exitBtn').href = `/lesson.html?id=${lessonId}`;
+
+  let tasks = [];
+  let savedAnswers = {};
+  let currentTaskIndex = 0;
+
   try {
-    [lesson, tasks] = await Promise.all([
-      api('/lessons/' + lessonId),
-      api('/homework/' + lessonId),
-    ]);
-  } catch (e) {
-    app.innerHTML = '<div class="empty-state">Не получилось загрузить задание 😕</div>';
-    return;
-  }
-
-  document.getElementById(
-    'breadcrumb'
-  ).innerHTML = `<a href="/index.html">← Все предметы</a> · <a href="/subject.html?id=${lesson.subjectId}">К урокам</a> · <a href="/lesson.html?id=${lesson.id}">${lesson.title}</a>`;
-
-  // state: массив ответов по каждой задаче
-  const state = tasks.map((t) => ({ selected: [], locked: false, verdict: null }));
-  let current = 0;
-  let finished = false;
-
-  ensureStudentName(() => renderAll());
-
-  function computeVerdict(task, selected) {
-    const correct = task.correct;
-    if (task.type === 'single') {
-      return selected.length === 1 && correct.includes(selected[0]) ? 'correct' : 'wrong';
-    }
-    // multiple
-    const selSet = new Set(selected);
-    const corSet = new Set(correct);
-    const exact =
-      selSet.size === corSet.size && [...selSet].every((v) => corSet.has(v));
-    if (exact) return 'correct';
-    const overlap = [...selSet].some((v) => corSet.has(v));
-    return overlap ? 'partial' : 'wrong';
-  }
-
-  function verdictLabel(v) {
-    if (v === 'correct') return '✅ Верно!';
-    if (v === 'partial') return '🟡 Частично верно';
-    return '❌ Неверно';
-  }
-
-  function renderProgress() {
-    progressTrack.innerHTML = tasks
-      .map((t, i) => {
-        const s = state[i];
-        let cls = 'progress-dot';
-        if (i === current && !finished) cls += ' active';
-        if (s.locked) {
-          if (s.verdict === 'correct') cls += ' done';
-          else if (s.verdict === 'partial') cls += ' partial';
-          else cls += ' wrong';
-        }
-        return `<div class="${cls}" data-index="${i}">${i + 1}</div>`;
-      })
-      .join('');
-
-    progressTrack.querySelectorAll('.progress-dot').forEach((el) => {
-      el.style.cursor = 'pointer';
-      el.addEventListener('click', () => {
-        const idx = Number(el.dataset.index);
-        if (state[idx].locked || idx === current) {
-          current = idx;
-          finished = false;
-          renderAll();
-        }
-      });
+    const res = await fetch(`/api/homework/${lessonId}`);
+    if (!res.ok) throw new Error('Ошибка загрузки');
+    
+    const data = await res.json();
+    tasks = data.tasks || [];
+    
+    // Преобразуем массив ответов в объект
+    (data.savedAnswers || []).forEach(a => {
+      savedAnswers[a.question_id] = a;
     });
-  }
 
-  function renderTask() {
-    const task = tasks[current];
-    const s = state[current];
-    const inputType = task.type === 'single' ? 'radio' : 'checkbox';
-
-    const questionImageHtml = task.image
-      ? `<img class="question-image" src="${task.image}" alt="" />`
-      : '';
-
-    const optionsHtml = task.options
-      .map((opt, i) => {
-        // Вариант ответа может быть просто строкой "Текст"
-        // либо объектом { "text": "Текст", "image": "https://..." }
-        const optText = typeof opt === 'string' ? opt : opt.text || '';
-        const optImage = typeof opt === 'string' ? null : opt.image;
-
-        const isSelected = s.selected.includes(i);
-        let cls = 'option';
-        if (optImage) cls += ' option-with-image';
-        if (isSelected) cls += ' selected';
-        if (s.locked) {
-          cls += ' locked';
-          if (task.correct.includes(i)) cls += ' correct-answer';
-          else if (isSelected) cls += ' wrong-answer';
-        }
-        const optionImageHtml = optImage
-          ? `<img class="option-image" src="${optImage}" alt="" />`
-          : '';
-        return `
-        <label class="${cls}" data-index="${i}">
-          <input type="${inputType}" name="opt" ${isSelected ? 'checked' : ''} ${s.locked ? 'disabled' : ''} />
-          ${optionImageHtml}
-          <span>${optText}</span>
-        </label>`;
-      })
-      .join('');
-
-    const hasOptionImages = task.options.some((o) => typeof o === 'object' && o.image);
-    const optionsWrapClass = hasOptionImages ? 'options grid-options' : 'options';
-
-    const verdictHtml = s.locked
-      ? `<div class="verdict ${s.verdict}">${verdictLabel(s.verdict)}</div>`
-      : '';
-
-    const isLast = current === tasks.length - 1;
-    let actionsHtml;
-    if (!s.locked) {
-      actionsHtml = `<button class="btn" id="checkBtn" disabled>Проверить</button>`;
-    } else if (isLast) {
-      actionsHtml = `<button class="btn" id="nextBtn">Показать результат →</button>`;
-    } else {
-      actionsHtml = `<button class="btn" id="nextBtn">Следующая задача →</button>`;
+    if (tasks.length === 0) {
+      document.getElementById('questionContent').innerHTML = '<p>В этом уроке пока нет домашних заданий.</p>';
+      return;
     }
 
-    app.innerHTML = `
-      <div class="task-card">
-        <span class="tag" style="margin-bottom:10px;display:inline-block;">Задача ${current + 1} из ${tasks.length}${task.type === 'multiple' ? ' · выбери все верные варианты' : ''}</span>
-        <div class="task-question">${task.question}</div>
-        ${questionImageHtml}
-        <div class="${optionsWrapClass}">${optionsHtml}</div>
-        ${verdictHtml}
-        <div class="task-actions">${actionsHtml}</div>
-      </div>
-    `;
-
-    if (!s.locked) {
-      app.querySelectorAll('.option').forEach((el) => {
-        el.addEventListener('click', () => {
-          const idx = Number(el.dataset.index);
-          if (task.type === 'single') {
-            s.selected = [idx];
-          } else {
-            const pos = s.selected.indexOf(idx);
-            if (pos >= 0) s.selected.splice(pos, 1);
-            else s.selected.push(idx);
-          }
-          renderTask();
-        });
-      });
-
-      const checkBtn = document.getElementById('checkBtn');
-      checkBtn.disabled = s.selected.length === 0;
-      checkBtn.addEventListener('click', () => {
-        s.locked = true;
-        s.verdict = computeVerdict(task, s.selected);
-        renderTask();
-        renderProgress();
-      });
-    } else {
-      const nextBtn = document.getElementById('nextBtn');
-      nextBtn.addEventListener('click', () => {
-        if (isLast) {
-          finished = true;
-          renderAll();
-        } else {
-          current += 1;
-          renderAll();
-        }
-      });
-    }
+    renderSidebar();
+    renderQuestion(0);
+  } catch (err) {
+    document.getElementById('questionContent').innerHTML = '<p class="msg error">Ошибка загрузки заданий.</p>';
   }
 
-  function renderSummary() {
-    const counts = { correct: 0, partial: 0, wrong: 0 };
-    state.forEach((s) => counts[s.verdict]++);
-    const total = tasks.length;
-    const scoreText = `${counts.correct} / ${total}`;
+  function renderSidebar() {
+    const navEl = document.getElementById('questionsNav');
+    navEl.innerHTML = tasks.map((task, idx) => {
+      const saved = savedAnswers[task.id];
+      let statusClass = '';
+      let badge = `${idx + 1}`;
 
-    app.innerHTML = `
-      <div class="summary-card">
-        <div class="tag">Задание завершено</div>
-        <div class="summary-score">${scoreText}</div>
-        <p style="color:#6b6280;">задач решено полностью верно</p>
-        <div class="summary-breakdown">
-          <div class="summary-pill correct">✅ Верно: ${counts.correct}</div>
-          <div class="summary-pill partial">🟡 Частично: ${counts.partial}</div>
-          <div class="summary-pill wrong">❌ Неверно: ${counts.wrong}</div>
-        </div>
-        <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:10px;">
-          <button class="btn" id="saveBtn">Сохранить результат</button>
-          <a class="btn btn-ghost" href="/subject.html?id=${lesson.subjectId}">К списку уроков</a>
-        </div>
-        <p id="saveStatus" style="margin-top:14px;color:#6b6280;font-size:14px;"></p>
-      </div>
-    `;
-
-    document.getElementById('saveBtn').addEventListener('click', async () => {
-      const statusEl = document.getElementById('saveStatus');
-      statusEl.textContent = 'Сохраняем…';
-      try {
-        await api('/results', {
-          method: 'POST',
-          body: JSON.stringify({
-            studentId: getStudentId(),
-            studentName: getStudentName(),
-            lessonId: lesson.id,
-            answers: state.map((s, i) => ({
-              taskId: tasks[i].id,
-              selected: s.selected,
-              verdict: s.verdict,
-            })),
-            score: counts,
-          }),
-        });
-        statusEl.textContent = '✅ Результат сохранён';
-      } catch (e) {
-        statusEl.textContent = '⚠️ Не получилось сохранить, но результат ты видишь выше';
+      if (saved) {
+        if (saved.status === 'correct') { statusClass = 'status-correct'; badge += ' ✓'; }
+        else if (saved.status === 'partial') { statusClass = 'status-partial'; badge += ' ~'; }
+        else if (saved.status === 'incorrect') { statusClass = 'status-incorrect'; badge += ' ✗'; }
       }
+
+      const activeClass = idx === currentTaskIndex ? 'active' : '';
+
+      return `
+        <button class="nav-q-btn ${statusClass} ${activeClass}" data-idx="${idx}">
+          Вопрос ${badge}
+        </button>
+      `;
+    }).join('');
+
+    navEl.querySelectorAll('.nav-q-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const idx = Number(e.target.dataset.idx);
+        currentTaskIndex = idx;
+        renderSidebar();
+        renderQuestion(idx);
+      });
     });
   }
 
-  function renderAll() {
-    renderProgress();
-    if (finished) renderSummary();
-    else renderTask();
+  function renderQuestion(idx) {
+    const task = tasks[idx];
+    const saved = savedAnswers[task.id];
+    const isLocked = !!saved; // Ответ уже дан — заблокировано
+
+    const container = document.getElementById('questionContent');
+
+    const optionsHTML = task.options.map((opt, oIdx) => {
+      const isChecked = saved && saved.selected_options && saved.selected_options.includes(opt);
+      const disabledAttr = isLocked ? 'disabled' : '';
+
+      return `
+        <label class="option-label ${isLocked ? 'disabled' : ''}">
+          <input type="checkbox" name="q_opt" value="${opt}" ${isChecked ? 'checked' : ''} ${disabledAttr}>
+          <span>${opt}</span>
+        </label>
+      `;
+    }).join('');
+
+    let statusBanner = '';
+    if (saved) {
+      if (saved.status === 'correct') {
+        statusBanner = '<div class="status-badge-box correct">✅ Ответ принят: ВЕРНО</div>';
+      } else if (saved.status === 'partial') {
+        statusBanner = '<div class="status-badge-box partial">⚠️ Ответ принят: ЧАСТИЧНО ВЕРНО</div>';
+      } else {
+        statusBanner = '<div class="status-badge-box incorrect">❌ Ответ принят: НЕВЕРНО</div>';
+      }
+    }
+
+    container.innerHTML = `
+      <div class="task-header-row">
+        <h2>Вопрос №${idx + 1}</h2>
+        ${statusBanner}
+      </div>
+      <p class="task-question">${task.question}</p>
+      ${task.image ? `<img src="${task.image}" class="task-image">` : ''}
+
+      <div class="options-list">${optionsHTML}</div>
+
+      <div class="task-footer">
+        ${!isLocked ? `<button id="submitAnswerBtn" class="btn-primary">Ответить</button>` : `<p class="locked-msg">🔒 Ответ зафиксирован (изменение невозможно)</p>`}
+      </div>
+    `;
+
+    if (!isLocked) {
+      document.getElementById('submitAnswerBtn').addEventListener('click', () => submitAnswer(task));
+    }
+  }
+
+  async function submitAnswer(task) {
+    const selected = Array.from(document.querySelectorAll('input[name="q_opt"]:checked')).map(i => i.value);
+
+    if (selected.length === 0) {
+      alert('Выберите хотя бы один вариант ответа!');
+      return;
+    }
+
+    const correctAnswers = Array.isArray(task.answer) ? task.answer : [task.answer];
+    
+    // Вычисляем статус
+    let correctCount = selected.filter(val => correctAnswers.includes(val)).length;
+    let wrongCount = selected.filter(val => !correctAnswers.includes(val)).length;
+
+    let status = 'incorrect';
+    if (correctCount === correctAnswers.length && wrongCount === 0) {
+      status = 'correct';
+    } else if (correctCount > 0 && wrongCount === 0) {
+      status = 'partial';
+    }
+
+    // Сохраняем локально и отправляем на сервер
+    savedAnswers[task.id] = {
+      question_id: task.id,
+      status: status,
+      selected_options: selected
+    };
+
+    await fetch(`/api/homework/${lessonId}/submit`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        questionId: task.id,
+        status: status,
+        selectedOptions: selected
+      })
+    });
+
+    renderSidebar();
+    renderQuestion(currentTaskIndex);
   }
 })();
