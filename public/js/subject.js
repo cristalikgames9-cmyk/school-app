@@ -1,7 +1,8 @@
 (async function () {
   const user = await API.getMe();
   if (!user) {
-    window.location.href = '/login.html';
+    // replace не сохраняет промежуточную страницу в истории
+    window.location.replace('/login.html');
     return;
   }
 
@@ -9,7 +10,7 @@
   const subjectId = params.get('id');
 
   if (!subjectId) {
-    window.location.href = '/';
+    window.location.replace('/');
     return;
   }
 

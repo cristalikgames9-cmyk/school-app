@@ -28,7 +28,7 @@ const API = {
     try {
       await this.request('/api/auth/logout', { method: 'POST' });
     } finally {
-      window.location.href = '/';
+      window.location.replace('/login.html');
     }
   },
 
@@ -63,11 +63,31 @@ const API = {
         welcomeEl.textContent = 'Добро пожаловать в Damir Online School!';
       }
     }
+  },
+
+  // Плавный переход между страницами через очистку состояния
+  initPageTransitions() {
+    document.addEventListener('click', (e) => {
+      const target = e.target.closest('a');
+      if (target && target.href && target.href.startsWith(window.location.origin) && !target.hasAttribute('download') && target.target !== '_blank') {
+        const url = target.href;
+        if (url !== window.location.href) {
+          e.preventDefault();
+          // Мгновенная очистка тела страницы для предотвращения артефактов при переходе
+          document.body.style.opacity = '0';
+          document.body.style.transition = 'opacity 0.15s ease';
+          setTimeout(() => {
+            window.location.href = url;
+          }, 150);
+        }
+      }
+    });
   }
 };
 
 document.addEventListener('DOMContentLoaded', () => {
   API.initHeader();
+  API.initPageTransitions();
 });
 
 window.API = API;
