@@ -1,43 +1,35 @@
-(async function () {
-  const user = await API.getMe();
-  if (!user) {
-    // replace не сохраняет промежуточную страницу в истории
-    window.location.replace('/login.html');
-    return;
-  }
-
+document.addEventListener('DOMContentLoaded', async () => {
   const params = new URLSearchParams(window.location.search);
   const subjectId = params.get('id');
 
+  const titleEl = document.getElementById('subject-title') || document.querySelector('h1');
+  const lessonsContainer = document.getElementById('lessons-list') || document.querySelector('.lessons-container');
+
   if (!subjectId) {
-    window.location.replace('/');
+    if (titleEl) titleEl.textContent = 'Ошибка загрузки предмета';
     return;
   }
 
   try {
-    const res = await fetch(`/api/subjects/${subjectId}`);
-    if (!res.ok) throw new Error('Предмет не найден');
-    const data = await res.json();
+    const data = await API.get(`/api/subjects/${subjectId}`);
+    
+    if (titleEl) titleEl.textContent = data.subject.title || data.subject.name;
 
-    document.title = `${data.subject.title} — Damir Online School`;
-    document.getElementById('subjectTitle').textContent = data.subject.title;
+    if (lessonsContainer) {
+      if (!data.lessons || data.lessons.length === 0) {
+        lessonsContainer.innerHTML = '<p>В этом предмете пока нет уроков.</p>';
+        return;
+      }
 
-    const listEl = document.getElementById('lessonsList');
-    if (!data.lessons || data.lessons.length === 0) {
-      listEl.innerHTML = '<p class="empty-state">Уроки пока не добавлены 📝</p>';
-      return;
+      lessonsContainer.innerHTML = data.lessons.map(l => `
+        <div class="lesson-card">
+          <h4>${l.title}</h4>
+          <a href="/lesson.html?id=${l.id}" class="btn">Перейти к уроку</a>
+        </div>
+      `).join('');
     }
-
-    listEl.innerHTML = data.lessons
-      .map((l, index) => `
-        <a href="/lesson.html?id=${l.id}" class="lesson-card ${l.isCompleted ? 'completed' : ''}">
-          <div class="lesson-num">Урок ${index + 1}</div>
-          <h3 class="lesson-title" style="flex: 1;">${l.title}</h3>
-          ${l.isCompleted ? '<span class="check-badge" title="Урок пройден">✅</span>' : ''}
-        </a>
-      `)
-      .join('');
   } catch (err) {
-    document.getElementById('subjectTitle').textContent = 'Ошибка загрузки предмета';
+    if (titleEl) titleEl.textContent = 'Ошибка загрузки предмета';
+    if (lessonsContainer) lessonsContainer.innerHTML = `<p style="color:red">${err.message}</p>`;
   }
-})();
+});
