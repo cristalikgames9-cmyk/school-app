@@ -19,9 +19,21 @@
     document.getElementById('lessonTitle').textContent = lesson.title;
     document.getElementById('lessonDescription').textContent = lesson.description || '';
 
+    // Привязываем ссылку «Назад» к конкретному предмету
+    const backLink = document.getElementById('backToSubjectLink');
+    if (backLink) {
+      if (lesson.subjectId) {
+        backLink.href = `/subject.html?id=${lesson.subjectId}`;
+      } else {
+        backLink.href = '/';
+      }
+    }
+
     if (lesson.video) {
       document.getElementById('videoBox').style.display = 'block';
       document.getElementById('lessonVideo').src = lesson.video;
+    } else {
+      document.getElementById('videoBox').style.display = 'none';
     }
 
     // Загружаем статистику ДЗ
