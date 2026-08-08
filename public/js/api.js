@@ -1,29 +1,9 @@
-/* === ЕДИНЫЙ МОДУЛЬ ДЛЯ РАБОТЫ С API И АВТОРИЗАЦИЕЙ === */
-
 const API = {
-  // Универсальный хелпер для отправки запросов
   async request(url, options = {}) {
-    const defaultHeaders = {
-      'Content-Type': 'application/json'
-    };
-
-    const config = {
-      ...options,
-      headers: {
-        ...defaultHeaders,
-        ...options.headers
-      }
-    };
-
+    const defaultHeaders = { 'Content-Type': 'application/json' };
+    const config = { ...options, headers: { ...defaultHeaders, ...options.headers } };
     try {
       const response = await fetch(url, config);
-      
-      // Если сессия истекла или не авторизован (на защищенных эндпоинтах)
-      if (response.status === 401 && !window.location.pathname.includes('/auth')) {
-        window.location.href = '/login.html';
-        return null;
-      }
-
       return response;
     } catch (error) {
       console.error(`Ошибка сетевого запроса (${url}):`, error);
@@ -31,7 +11,6 @@ const API = {
     }
   },
 
-  // Получение текущего пользователя
   async getMe() {
     try {
       const res = await this.request('/api/auth/me');
@@ -45,7 +24,6 @@ const API = {
     return null;
   },
 
-  // Выход из системы
   async logout() {
     try {
       await this.request('/api/auth/logout', { method: 'POST' });
@@ -54,7 +32,6 @@ const API = {
     }
   },
 
-  // Автоматическая инициализация шапки (Приветствие + Кнопка «Выйти»)
   async initHeader() {
     const userNameEl = document.getElementById('userName');
     const welcomeEl = document.getElementById('welcomeText');
@@ -71,27 +48,26 @@ const API = {
             <button id="globalLogoutBtn" class="btn-logout">Выйти</button>
           </div>
         `;
-
         document.getElementById('globalLogoutBtn')?.addEventListener('click', () => {
           API.logout();
         });
       }
-
       if (welcomeEl) {
         welcomeEl.textContent = `Привет, ${user.username}!`;
       }
     } else {
       if (userNameEl) {
-        userNameEl.innerHTML = `<a href="/login.html" class="btn-primary" style="padding: 6px 12px; font-size: 13px;">Войти</a>`;
+        userNameEl.innerHTML = `<a href="/login.html" class="btn-primary" style="padding: 6px 14px; font-size: 13px; text-decoration: none; display: inline-block;">Войти</a>`;
+      }
+      if (welcomeEl) {
+        welcomeEl.textContent = 'Добро пожаловать в Damir Online School!';
       }
     }
   }
 };
 
-// Автозапуск отрисовки шапки при загрузке любой страницы
 document.addEventListener('DOMContentLoaded', () => {
   API.initHeader();
 });
 
-// Экспорт в глобальную область видимости
 window.API = API;

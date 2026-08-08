@@ -1,4 +1,10 @@
 (async function () {
+  const user = await API.getMe();
+  if (!user) {
+    window.location.href = '/login.html';
+    return;
+  }
+
   const params = new URLSearchParams(window.location.search);
   const subjectId = params.get('id');
 
@@ -12,7 +18,7 @@
     if (!res.ok) throw new Error('Предмет не найден');
     const data = await res.json();
 
-    document.title = `${data.subject.title} — Школа №1`;
+    document.title = `${data.subject.title} — Damir Online School`;
     document.getElementById('subjectTitle').textContent = data.subject.title;
 
     const listEl = document.getElementById('lessonsList');
