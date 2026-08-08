@@ -264,3 +264,97 @@ app.post('/api/homework/:lessonId/submit', authMiddleware, async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
+/* === ПОДСЧЁТ ПРОГРЕССА ПОЛЬЗОВАТЕЛЯ === */
+async function getUserProgress(userId) {
+  if (!userId) return { completedLessons: new Set(), completedSubjects: new Set() };
+
+  try {
+    const { data: results } = await supabase
+      .from('homework_results')
+      .select('lesson_id, question_id')
+      .eq('user_id', String(userId));
+
+    if (!results) return { completedLessons: new Set(), completedSubjects: new Set() };
+
+    const allLessons = loadLessonsFromFiles();
+    const completedLessons = new Set();
+
+    // Группируем отвеченные вопросы по урокам
+    const answeredMap = {};
+    results.forEach(r => {
+      if (!answeredMap[r.lesson_id]) answeredMap[r.lesson_id] = new Set();
+      answeredMap[r.lesson_id].add(r.question_id);
+    });
+
+    // Урок считается пройденным, если отвечены все его вопросы
+    allLessons.forEach(lesson => {
+      const taskCount = lesson.tasks ? lesson.tasks.length : 0;
+      const answeredCount = answeredMap[lesson.id] ? answeredMap[lesson.id].size : 0;
+      if (taskCount > 0 && answeredCount >= taskCount) {
+        completedLessons.add(lesson.id);
+      }
+    });
+
+    // Курс/предмет считается пройденным, если все его уроки выполнены
+    const subjects = readJSON('subjects.json');
+    const completedSubjects = new Set();
+
+    subjects.forEach(sub => {
+      const subLessons = allLessons.filter(l => l.subjectId === sub.id);
+      if (subLessons.length > 0) {
+        const allDone = subLessons.every(l => completedLessons.has(l.id));
+        if (allDone) completedSubjects.add(sub.id);
+      }
+    });
+
+    return { completedLessons, completedSubjects };
+  } catch (err) {
+    return { completedLessons: new Set(), completedSubjects: new Set() };
+  }
+}
+
+/* === МАРШРУТ ВЫХОДА ИЗ АККАУНТА === */
+app.post('/api/auth/logout', (req, res) => {
+  res.clearCookie('userId');
+  res.json({ success: true });
+});
+
+/* === ОБНОВЛЕННЫЕ МАРШРУТЫ ПРЕДМЕТОВ И УРОКОВ === */
+app.get('/api/subjects', async (req, res) => {
+  const subjects = readJSON('subjects.json');
+  const userId = req.cookies.userId;
+  const { completedSubjects } = await getUserProgress(userId);
+
+  const result = subjects.map(s => ({
+    ...s,
+    isCompleted: completedSubjects.has(s.id)
+  }));
+
+  res.json(result);
+});
+
+app.get('/api/subjects/:id', async (req, res) => {
+  const subjects = readJSON('subjects.json');
+  const subject = subjects.find(s => s.id === req.params.id);
+
+  if (!subject) return res.status(404).json({ error: 'Предмет не найден' });
+
+  const allLessons = loadLessonsFromFiles();
+  const subjectLessons = allLessons.filter(l => l.subjectId === req.params.id);
+
+  const userId = req.cookies.userId;
+  const { completedLessons, completedSubjects } = await getUserProgress(userId);
+
+  const lessonsWithProgress = subjectLessons.map(l => ({
+    ...l,
+    isCompleted: completedLessons.has(l.id)
+  }));
+
+  res.json({
+    subject: {
+      ...subject,
+      isCompleted: completedSubjects.has(subject.id)
+    },
+    lessons: lessonsWithProgress
+  });
+});

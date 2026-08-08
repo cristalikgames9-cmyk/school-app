@@ -348,3 +348,43 @@ body {
 
 .option-label.disabled { cursor: not-allowed; opacity: 0.8; }
 .locked-msg { color: #64748b; font-size: 14px; font-weight: 600; }
+/* Кнопка выхода в шапке */
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.btn-logout {
+  background: #f1f5f9;
+  color: #64748b;
+  border: 1px solid #cbd5e1;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-logout:hover {
+  background: #fee2e2;
+  color: #dc2626;
+  border-color: #fca5a5;
+}
+
+/* Галочки и подсвечивание пройденных курсов/уроков */
+.check-badge {
+  font-size: 18px;
+  line-height: 1;
+}
+
+.subject-card.completed {
+  border-color: #bbf7d0;
+  background-color: #f0fdf4;
+}
+
+.lesson-card.completed {
+  border-color: #bbf7d0;
+  background-color: #f0fdf4;
+}

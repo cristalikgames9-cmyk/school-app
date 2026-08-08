@@ -23,9 +23,10 @@
 
     listEl.innerHTML = data.lessons
       .map((l, index) => `
-        <a href="/lesson.html?id=${l.id}" class="lesson-card">
+        <a href="/lesson.html?id=${l.id}" class="lesson-card ${l.isCompleted ? 'completed' : ''}">
           <div class="lesson-num">Урок ${index + 1}</div>
-          <h3 class="lesson-title">${l.title}</h3>
+          <h3 class="lesson-title" style="flex: 1;">${l.title}</h3>
+          ${l.isCompleted ? '<span class="check-badge" title="Урок пройден">✅</span>' : ''}
         </a>
       `)
       .join('');
