@@ -7,49 +7,44 @@ const { createClient } = require('@supabase/supabase-js');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// 1. Инициализация Supabase
+// Supabase Connection
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_KEY;
 
 if (!supabaseUrl || !supabaseKey) {
-  console.warn('⚠️ Предупреждение: SUPABASE_URL или SUPABASE_KEY не найдены в переменных окружения.');
+  console.error('❌ ОШИБКА: Переменные SUPABASE_URL или SUPABASE_KEY не установлены!');
 }
 
 const supabase = createClient(supabaseUrl || '', supabaseKey || '');
 
-// Middleware
+// Middlewares
 app.use(express.json());
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
-// 2. Вспомогательные функции для работы с локальной файловой системой
+// === ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ (ДАННЫЕ И УРОКИ) ===
 
-// Безопасное чтение JSON из папки /data/
-function readDataJson(filename) {
+function readDataJSON(filename) {
   const filePath = path.join(__dirname, 'data', filename);
   if (!fs.existsSync(filePath)) return [];
   try {
-    const raw = fs.readFileSync(filePath, 'utf8');
-    return JSON.parse(raw);
+    return JSON.parse(fs.readFileSync(filePath, 'utf8'));
   } catch (err) {
-    console.error(` Ошибка чтения data/${filename}:`, err);
+    console.error(`Ошибка чтения data/${filename}:`, err);
     return [];
   }
 }
 
-// Рекурсивный поиск файла урока (.md, .txt, .json) во всей структуре data/lessons/
+// Рекурсивный поиск файлов уроков по всем вложенным категориям (math, lit, russian)
 function findLessonFile(dir, lessonId) {
   if (!fs.existsSync(dir)) return null;
+  const exts = ['.md', '.txt', '.json'];
 
-  const extensions = ['.md', '.txt', '.json'];
-
-  // 1. Проверяем в текущей папке
-  for (const ext of extensions) {
-    const fullPath = path.join(dir, `${lessonId}${ext}`);
-    if (fs.existsSync(fullPath)) return fullPath;
+  for (const ext of exts) {
+    const directPath = path.join(dir, `${lessonId}${ext}`);
+    if (fs.existsSync(directPath)) return directPath;
   }
 
-  // 2. Рекурсивно сканируем все подпапки (math, lit, russian и т.д.)
   const items = fs.readdirSync(dir, { withFileTypes: true });
   for (const item of items) {
     if (item.isDirectory()) {
@@ -57,79 +52,60 @@ function findLessonFile(dir, lessonId) {
       if (found) return found;
     }
   }
-
   return null;
 }
 
-// Парсинг файла урока
 function loadLessonData(lessonId) {
   const lessonsDir = path.join(__dirname, 'data', 'lessons');
   const filePath = findLessonFile(lessonsDir, lessonId);
-
   if (!filePath) return null;
 
   try {
     let raw = fs.readFileSync(filePath, 'utf8').trim();
-    // Очистка от блоков кода Markdown ```json ... ```
     raw = raw.replace(/^```(?:json)?/gi, '').replace(/```$/gi, '').trim();
     return JSON.parse(raw);
   } catch (err) {
-    console.error(` Ошибка парсинга урока по пути ${filePath}:`, err);
+    console.error(`Ошибка парсинга урока ${filePath}:`, err);
     return null;
   }
 }
 
-// Проверка ответов пользователя для 4 типов заданий
 function validateTaskAnswer(task, userAnswer) {
   if (userAnswer === undefined || userAnswer === null) return false;
 
-  // Одиночный выбор
   if (task.type === 'normal') {
     return String(userAnswer).trim().toUpperCase() === String(task.correctAnswer).trim().toUpperCase();
   }
-
-  // Множественный выбор
   if (task.type === 'multiple') {
     if (!Array.isArray(userAnswer)) return false;
     const uSet = new Set(userAnswer.map(a => String(a).trim().toUpperCase()));
     const cSet = new Set(task.correctAnswer.map(a => String(a).trim().toUpperCase()));
     if (uSet.size !== cSet.size) return false;
-    for (const item of uSet) {
-      if (!cSet.has(item)) return false;
-    }
+    for (const item of uSet) if (!cSet.has(item)) return false;
     return true;
   }
-
-  // Текстовый ввод
   if (task.type === 'text') {
     return String(userAnswer).trim().toLowerCase() === String(task.correctAnswer).trim().toLowerCase();
   }
-
-  // Соотнесение блоков
   if (task.type === 'block') {
     if (typeof userAnswer !== 'object' || userAnswer === null) return false;
     const keys = Object.keys(task.correctAnswer || {});
     for (const key of keys) {
-      const uVal = String(userAnswer[key] || '').trim().toLowerCase();
-      const cVal = String(task.correctAnswer[key]).trim().toLowerCase();
-      if (uVal !== cVal) return false;
+      if (String(userAnswer[key] || '').trim().toLowerCase() !== String(task.correctAnswer[key]).trim().toLowerCase()) {
+        return false;
+      }
     }
     return true;
   }
-
   return false;
 }
 
-// 3. Маршруты авторизации (Supabase)
+// === API АВТОРИЗАЦИИ ===
 
-// Регистрация
 app.post('/api/auth/register', async (req, res) => {
   try {
     const { username, password } = req.body;
-
-    if (!username || !password) {
-      return res.status(400).json({ error: 'Заполните все поля!' });
-    }
+    if (!username || !password) return res.status(400).json({ error: 'Заполните все поля!' });
 
     const cleanUser = String(username).trim();
     const cleanPass = String(password).trim();
@@ -138,17 +114,22 @@ app.post('/api/auth/register', async (req, res) => {
       return res.status(400).json({ error: 'Логин и пароль должны быть от 4 до 12 символов!' });
     }
 
-    // Проверка существования логина в БД
-    const { data: existing } = await supabase
+    // Проверка дубликата
+    const { data: existing, error: searchErr } = await supabase
       .from('users')
       .select('id')
       .ilike('username', cleanUser);
 
-    if (existing && existing.length > 0) {
-      return res.status(400).json({ error: 'Пользователь уже существует' });
+    if (searchErr) {
+      console.error('Supabase DB Error:', searchErr);
+      return res.status(500).json({ error: 'Ошибка подключения к БД' });
     }
 
-    // Добавление аккаунта
+    if (existing && existing.length > 0) {
+      return res.status(400).json({ error: 'Пользователь с таким логином уже существует' });
+    }
+
+    // Создание
     const { data: newUser, error: insertErr } = await supabase
       .from('users')
       .insert([{ username: cleanUser, password: cleanPass }])
@@ -156,71 +137,53 @@ app.post('/api/auth/register', async (req, res) => {
       .single();
 
     if (insertErr || !newUser) {
-      console.error(' Ошибка создания пользователя в Supabase:', insertErr);
-      return res.status(500).json({ error: 'Ошибка сохранения в базу данных' });
+      console.error('Supabase Insert Error:', insertErr);
+      return res.status(500).json({ error: 'Не удалось зарегистрировать пользователя' });
     }
 
-    res.cookie('userId', String(newUser.id), {
-      httpOnly: true,
-      maxAge: 30 * 24 * 60 * 60 * 1000,
-      sameSite: 'lax'
-    });
-
+    res.cookie('userId', String(newUser.id), { httpOnly: true, maxAge: 30 * 24 * 3600 * 1000, sameSite: 'lax' });
     return res.json({ success: true, user: { id: newUser.id, username: newUser.username } });
   } catch (err) {
-    console.error('Ошибка сервера при регистрации:', err);
-    return res.status(500).json({ error: 'Внутренняя ошибка сервера' });
+    console.error('Register Exception:', err);
+    return res.status(500).json({ error: 'Системная ошибка сервера' });
   }
 });
 
-// Вход
 app.post('/api/auth/login', async (req, res) => {
   try {
     const { username, password } = req.body;
-
-    if (!username || !password) {
-      return res.status(400).json({ error: 'Заполните все поля!' });
-    }
+    if (!username || !password) return res.status(400).json({ error: 'Заполните все поля!' });
 
     const cleanUser = String(username).trim();
     const cleanPass = String(password).trim();
 
-    // Запрашиваем всех кандидатов по совпадению логина без учета регистра
     const { data: users, error: dbErr } = await supabase
       .from('users')
       .select('*')
       .ilike('username', cleanUser);
 
     if (dbErr) {
-      console.error(' Ошибка обращения к Supabase:', dbErr);
-      return res.status(500).json({ error: 'Ошибка базы данных' });
+      console.error('Supabase Select Error:', dbErr);
+      return res.status(500).json({ error: 'Ошибка базы данных Supabase' });
     }
 
     if (!users || users.length === 0) {
       return res.status(401).json({ error: 'Неверный логин или пароль' });
     }
 
-    // Поиск совпадения по паролю
     const foundUser = users.find(u => String(u.password).trim() === cleanPass);
-
     if (!foundUser) {
       return res.status(401).json({ error: 'Неверный логин или пароль' });
     }
 
-    res.cookie('userId', String(foundUser.id), {
-      httpOnly: true,
-      maxAge: 30 * 24 * 60 * 60 * 1000,
-      sameSite: 'lax'
-    });
-
+    res.cookie('userId', String(foundUser.id), { httpOnly: true, maxAge: 30 * 24 * 3600 * 1000, sameSite: 'lax' });
     return res.json({ success: true, user: { id: foundUser.id, username: foundUser.username } });
   } catch (err) {
-    console.error('Ошибка сервера при входе:', err);
-    return res.status(500).json({ error: 'Внутренняя ошибка сервера' });
+    console.error('Login Exception:', err);
+    return res.status(500).json({ error: 'Системная ошибка авторизации' });
   }
 });
 
-// Получение профиля
 app.get('/api/auth/me', async (req, res) => {
   try {
     const userId = req.cookies.userId;
@@ -239,108 +202,77 @@ app.get('/api/auth/me', async (req, res) => {
   }
 });
 
-// Выход
 app.post('/api/auth/logout', (req, res) => {
   res.clearCookie('userId');
   res.json({ success: true });
 });
 
-// 4. Маршруты предметов и уроков (Локальные JSON)
+// === API КОНТЕНТА И ДЗ ===
 
-// Список предметов из data/subjects.json
 app.get('/api/subjects', (req, res) => {
-  const subjects = readDataJson('subjects.json');
-  res.json(subjects);
+  res.json(readDataJSON('subjects.json'));
 });
 
-// Предмет и его уроки из data/lessons.json
 app.get('/api/subjects/:id', (req, res) => {
-  const subjects = readDataJson('subjects.json');
+  const subjects = readDataJSON('subjects.json');
   const targetId = String(req.params.id);
-
   const subject = subjects.find(s => String(s.id) === targetId);
 
-  if (!subject) {
-    return res.status(404).json({ error: 'Предмет не найден' });
-  }
+  if (!subject) return res.status(404).json({ error: 'Предмет не найден' });
 
-  const allLessons = readDataJson('lessons.json');
+  const allLessons = readDataJSON('lessons.json');
   const subjectLessons = allLessons.filter(l => String(l.subjectId) === targetId);
 
   res.json({ subject, lessons: subjectLessons });
 });
 
-// Получение контента конкретного урока по ID
 app.get('/api/lessons/:id', (req, res) => {
   const lessonData = loadLessonData(req.params.id);
+  if (!lessonData) return res.status(404).json({ error: 'Файл урока не найден' });
 
-  if (!lessonData) {
-    return res.status(404).json({ error: 'Файл урока не найден в папке data/lessons/' });
-  }
-
-  // Удаляем правильные ответы из отправляемого клиенту объекта
   const safeLesson = {
     ...lessonData,
     tasks: (lessonData.tasks || []).map(t => {
-      const { correctAnswer, ...taskWithoutAnswer } = t;
-      return taskWithoutAnswer;
+      const { correctAnswer, ...rest } = t;
+      return rest;
     })
   };
-
   res.json(safeLesson);
 });
-
-// 5. Проверка ДЗ и запись результатов в Supabase
 
 app.post('/api/homework/submit', async (req, res) => {
   try {
     const userId = req.cookies.userId;
-    if (!userId) {
-      return res.status(401).json({ error: 'Необходима авторизация' });
-    }
+    if (!userId) return res.status(401).json({ error: 'Авторизуйтесь для отправки ДЗ' });
 
     const { lessonId, answers } = req.body;
     const lessonData = loadLessonData(lessonId);
-
-    if (!lessonData || !lessonData.tasks) {
-      return res.status(400).json({ error: 'Урок не найден или не содержит заданий' });
-    }
+    if (!lessonData || !lessonData.tasks) return res.status(400).json({ error: 'Урок не найден' });
 
     let correctCount = 0;
     const totalCount = lessonData.tasks.length;
 
     lessonData.tasks.forEach(task => {
-      const userAnswer = answers ? answers[task.id] : null;
-      if (validateTaskAnswer(task, userAnswer)) {
+      if (validateTaskAnswer(task, answers ? answers[task.id] : null)) {
         correctCount++;
       }
     });
 
     const isSuccess = correctCount === totalCount;
 
-    // Запись результата в БД
-    await supabase.from('results').insert([
-      {
-        user_id: userId,
-        lesson_id: lessonId,
-        score: correctCount,
-        total: totalCount,
-        is_success: isSuccess
-      }
-    ]);
-
-    res.json({
-      success: isSuccess,
+    await supabase.from('results').insert([{
+      user_id: userId,
+      lesson_id: lessonId,
       score: correctCount,
-      total: totalCount
-    });
+      total: totalCount,
+      is_success: isSuccess
+    }]);
+
+    res.json({ success: isSuccess, score: correctCount, total: totalCount });
   } catch (err) {
-    console.error('Ошибка сохранения ДЗ:', err);
-    res.status(500).json({ error: 'Ошибка сервера при проверке ДЗ' });
+    console.error('Submit Error:', err);
+    res.status(500).json({ error: 'Ошибка сохранения ДЗ' });
   }
 });
 
-// Запуск
-app.listen(PORT, () => {
-  console.log(`🚀 Сервер школы запущен и работает на порту ${PORT}`);
-});
+app.listen(PORT, () => console.log(`🚀 Server listening on port ${PORT}`));
