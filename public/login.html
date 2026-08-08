@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Вход — Школа №1</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body style="display: flex; justify-content: center; align-items: center; min-height: 100vh; background: #f8fafc; margin: 0;">
+  <div style="background: #ffffff; padding: 32px; border-radius: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); width: 100%; max-width: 380px;">
+    <h1 style="font-size: 24px; font-weight: 700; text-align: center; margin-bottom: 24px; color: #0f172a;">Вход в систему</h1>
+    
+    <form id="loginForm">
+      <div style="margin-bottom: 16px;">
+        <label style="display: block; font-size: 14px; font-weight: 600; margin-bottom: 6px; color: #334155;">Логин</label>
+        <input type="text" id="username" style="width: 100%; padding: 10px 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px; box-sizing: border-box;" required>
+      </div>
+      
+      <div style="margin-bottom: 24px;">
+        <label style="display: block; font-size: 14px; font-weight: 600; margin-bottom: 6px; color: #334155;">Пароль</label>
+        <input type="password" id="password" style="width: 100%; padding: 10px 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 14px; box-sizing: border-box;" required>
+      </div>
+
+      <button type="submit" class="btn-primary" style="width: 100%; padding: 12px; font-size: 15px; cursor: pointer;">Войти</button>
+      <p id="errorMsg" style="color: #ef4444; font-size: 13px; margin-top: 12px; text-align: center; display: none;"></p>
+    </form>
+  </div>
+
+  <script>
+    document.getElementById('loginForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const username = document.getElementById('username').value;
+      const password = document.getElementById('password').value;
+      const errorMsg = document.getElementById('errorMsg');
+
+      try {
+        const res = await fetch('/api/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, password })
+        });
+
+        if (res.ok) {
+          window.location.href = '/';
+        } else {
+          const data = await res.json();
+          errorMsg.textContent = data.error || 'Неверный логин или пароль';
+          errorMsg.style.display = 'block';
+        }
+      } catch (err) {
+        errorMsg.textContent = 'Ошибка соединения с сервером';
+        errorMsg.style.display = 'block';
+      }
+    });
+  </script>
+</body>
+</html>
