@@ -351,6 +351,8 @@ body {
 }
 
 .option-label.disabled { cursor: not-allowed; opacity: 0.8; }
+.option-label.correct-answer { background: #f0fdf4; border-color: #bbf7d0; }
+.option-label.wrong-answer { background: #fef2f2; border-color: #fecaca; }
 .locked-msg { color: #64748b; font-size: 14px; font-weight: 600; }
 /* Кнопка выхода в шапке */
 .user-info {

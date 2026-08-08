@@ -1,4 +1,12 @@
 document.addEventListener('DOMContentLoaded', async () => {
+  // Без аккаунта прогресс не сохранится — отправляем на вход
+  const meRes = await fetch('/api/auth/me');
+  const meData = await meRes.json();
+  if (!meData.user) {
+    window.location.href = '/login.html';
+    return;
+  }
+
   const params = new URLSearchParams(window.location.search);
   const subjectId = params.get('id');
   
@@ -24,12 +32,16 @@ document.addEventListener('DOMContentLoaded', async () => {
         lessonsList.innerHTML = '<p>В этом предмете пока нет уроков.</p>';
       } else {
         // Рендерим уроки с сохранением твоих классов
-        lessonsList.innerHTML = data.lessons.map(l => `
-          <div class="lesson-card">
-            <h4>${l.title || 'Урок'}</h4>
-            <a href="/lesson.html?id=${l.id}" class="btn">Перейти к уроку</a>
+        const completedIds = meData.completedLessonIds || [];
+        lessonsList.innerHTML = data.lessons.map(l => {
+          const isDone = completedIds.includes(l.id);
+          return `
+          <div class="lesson-card ${isDone ? 'completed' : ''}">
+            <h4>${l.title || 'Урок'} ${isDone ? '<span class="check-badge">✅</span>' : ''}</h4>
+            <a href="/lesson.html?id=${l.id}" class="btn-primary">Перейти к уроку</a>
           </div>
-        `).join('');
+        `;
+        }).join('');
       }
     }
   } catch (err) {
