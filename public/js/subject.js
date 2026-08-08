@@ -2,11 +2,12 @@ document.addEventListener('DOMContentLoaded', async () => {
   const params = new URLSearchParams(window.location.search);
   const subjectId = params.get('id');
   
-  const titleEl = document.getElementById('subject-title') || document.querySelector('h1');
-  const lessonsContainer = document.getElementById('lessons-list') || document.querySelector('.lessons-container');
+  // Строго ID из subject.html
+  const titleEl = document.getElementById('subjectTitle');
+  const lessonsList = document.getElementById('lessonsList');
 
   if (!subjectId) {
-    if (titleEl) titleEl.textContent = 'Ошибка: ID предмета не указан';
+    if (titleEl) titleEl.textContent = 'Ошибка: Предмет не выбран';
     return;
   }
 
@@ -14,15 +15,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     const res = await fetch(`/api/subjects/${subjectId}`);
     const data = await res.json();
 
-    if (!res.ok) throw new Error(data.error || 'Ошибка загрузки с сервера');
+    if (!res.ok) throw new Error(data.error || 'Ошибка сервера');
 
     if (titleEl) titleEl.textContent = data.subject.title || data.subject.name;
 
-    if (lessonsContainer) {
+    if (lessonsList) {
       if (!data.lessons || data.lessons.length === 0) {
-        lessonsContainer.innerHTML = '<p>В этом предмете пока нет уроков.</p>';
+        lessonsList.innerHTML = '<p>В этом предмете пока нет уроков.</p>';
       } else {
-        lessonsContainer.innerHTML = data.lessons.map(l => `
+        // Рендерим уроки с сохранением твоих классов
+        lessonsList.innerHTML = data.lessons.map(l => `
           <div class="lesson-card">
             <h4>${l.title || 'Урок'}</h4>
             <a href="/lesson.html?id=${l.id}" class="btn">Перейти к уроку</a>
@@ -33,6 +35,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   } catch (err) {
     console.error('Ошибка:', err);
     if (titleEl) titleEl.textContent = 'Ошибка загрузки предмета';
-    if (lessonsContainer) lessonsContainer.innerHTML = `<p style="color:red">${err.message}</p>`;
+    if (lessonsList) lessonsList.innerHTML = `<p style="color:red">${err.message}</p>`;
   }
 });
