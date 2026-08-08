@@ -1,12 +1,13 @@
 document.addEventListener('DOMContentLoaded', async () => {
   const subjectsContainer = document.getElementById('subjects-list') || document.querySelector('.subjects-grid');
+  if (!subjectsContainer) return;
 
   try {
-    const subjects = await API.get('/api/subjects');
-    if (!subjectsContainer) return;
+    const res = await fetch('/api/subjects');
+    const subjects = await res.json();
 
     if (!subjects || subjects.length === 0) {
-      subjectsContainer.innerHTML = '<p>Предметы не найдены</p>';
+      subjectsContainer.innerHTML = '<p>Предметы не найдены.</p>';
       return;
     }
 
@@ -17,6 +18,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       </a>
     `).join('');
   } catch (err) {
-    if (subjectsContainer) subjectsContainer.innerHTML = '<p>Не удалось загрузить предметы</p>';
+    console.error('Ошибка загрузки:', err);
+    subjectsContainer.innerHTML = '<p style="color:red">Не удалось загрузить предметы.</p>';
   }
 });

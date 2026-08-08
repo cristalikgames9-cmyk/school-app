@@ -30,8 +30,8 @@ document.addEventListener('DOMContentLoaded', () => {
       e.preventDefault();
       showError('');
 
-      const username = document.getElementById('username')?.value;
-      const password = document.getElementById('password')?.value;
+      const username = document.getElementById('username')?.value.trim();
+      const password = document.getElementById('password')?.value.trim();
 
       if (!username || !password) {
         showError('Заполните все поля');
@@ -41,7 +41,16 @@ document.addEventListener('DOMContentLoaded', () => {
       const endpoint = mode === 'login' ? '/api/auth/login' : '/api/auth/register';
 
       try {
-        const data = await API.post(endpoint, { username, password });
+        const res = await fetch(endpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, password })
+        });
+        
+        const data = await res.json();
+
+        if (!res.ok) throw new Error(data.error || 'Произошла ошибка');
+
         if (data.success) {
           window.location.href = '/index.html';
         }
