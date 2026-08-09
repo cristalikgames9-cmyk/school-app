@@ -203,7 +203,7 @@ app.get('/api/auth/me', async (req, res) => {
     const { data: answers, error } = await supabase
       .from('homework_results')
       .select('lesson_id, question_id')
-      .eq('user_id', user.id);
+      .eq('user_id', String(user.id));
     if (error) throw error;
 
     const answeredCountByLesson = {};
@@ -279,7 +279,7 @@ app.get('/api/homework/:lessonId', async (req, res) => {
       const { data, error } = await supabase
         .from('homework_results')
         .select('question_id, status, selected_options')
-        .eq('user_id', user.id)
+        .eq('user_id', String(user.id))
         .eq('lesson_id', req.params.lessonId);
       if (error) throw error;
       savedAnswers = data || [];
@@ -300,7 +300,7 @@ app.post('/api/homework/:lessonId/submit', requireAuth, async (req, res) => {
 
     const { error } = await supabase.from('homework_results').upsert(
       {
-        user_id: req.user.id,
+        user_id: String(req.user.id),
         lesson_id: req.params.lessonId,
         question_id: questionId,
         status,
@@ -313,7 +313,9 @@ app.post('/api/homework/:lessonId/submit', requireAuth, async (req, res) => {
     res.json({ ok: true });
   } catch (err) {
     console.error('homework submit error:', err.message || err);
-    res.status(500).json({ error: 'Не получилось сохранить ответ' });
+    // Отдаём текст реальной ошибки Supabase прямо клиенту — на маленьком
+    // проекте это ускоряет отладку, не нужно лазить в консоль сервера.
+    res.status(500).json({ error: err.message || 'Не получилось сохранить ответ' });
   }
 });
 

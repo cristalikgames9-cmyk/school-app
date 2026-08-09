@@ -229,7 +229,11 @@ window.addEventListener('pageshow', (event) => {
 
     const status = computeStatus(task, selected);
 
-    savedAnswers[task.id] = { question_id: task.id, status, selected_options: selected };
+    const submitBtn = document.getElementById('submitAnswerBtn');
+    if (submitBtn) {
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Сохраняю...';
+    }
 
     try {
       const res = await fetch(`/api/homework/${lessonId}/submit`, {
@@ -237,13 +241,27 @@ window.addEventListener('pageshow', (event) => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ questionId: task.id, status, selectedOptions: selected }),
       });
+
       if (!res.ok) {
         const body = await res.json().catch(() => ({}));
-        console.error('Не удалось сохранить ответ:', body.error);
+        alert('Не получилось сохранить ответ на сервере:\n' + (body.error || 'неизвестная ошибка') + '\n\nОтвет НЕ засчитан, попробуй ещё раз.');
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.textContent = 'Проверить';
+        }
+        return; // не блокируем вопрос локально — сервер его не сохранил
       }
     } catch (err) {
-      console.error('Ошибка при сохранении ответа:', err);
+      alert('Не получилось соединиться с сервером. Проверь интернет и попробуй ещё раз.');
+      if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Проверить';
+      }
+      return;
     }
+
+    // Сервер подтвердил сохранение — только теперь помечаем вопрос как отвеченный
+    savedAnswers[task.id] = { question_id: task.id, status, selected_options: selected };
 
     renderSidebar();
     renderQuestion(currentTaskIndex);
