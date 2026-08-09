@@ -201,7 +201,7 @@ app.get('/api/auth/me', async (req, res) => {
     const totalLessons = allLessons.length;
 
     const { data: answers, error } = await supabase
-      .from('answers')
+      .from('homework_results')
       .select('lesson_id, question_id')
       .eq('user_id', user.id);
     if (error) throw error;
@@ -277,7 +277,7 @@ app.get('/api/homework/:lessonId', async (req, res) => {
     const user = await getCurrentUser(req);
     if (user) {
       const { data, error } = await supabase
-        .from('answers')
+        .from('homework_results')
         .select('question_id, status, selected_options')
         .eq('user_id', user.id)
         .eq('lesson_id', req.params.lessonId);
@@ -298,7 +298,7 @@ app.post('/api/homework/:lessonId/submit', requireAuth, async (req, res) => {
       return res.status(400).json({ error: 'Недостаточно данных' });
     }
 
-    const { error } = await supabase.from('answers').upsert(
+    const { error } = await supabase.from('homework_results').upsert(
       {
         user_id: req.user.id,
         lesson_id: req.params.lessonId,

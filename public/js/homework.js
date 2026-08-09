@@ -165,6 +165,19 @@ window.addEventListener('pageshow', (event) => {
     }
 
     const typeHint = task.type === 'multiple' ? ' (можно выбрать несколько)' : '';
+    const hasNext = idx < tasks.length - 1;
+
+    let footerHTML;
+    if (!isLocked) {
+      footerHTML = `<button id="submitAnswerBtn" class="btn-check">Проверить</button>`;
+    } else {
+      footerHTML = `<p class="locked-msg">🔒 Ответ зафиксирован (изменение невозможно)</p>`;
+      if (hasNext) {
+        footerHTML += `<button id="nextTaskBtn" class="btn-primary" style="margin-top:10px;">Далее →</button>`;
+      } else {
+        footerHTML += `<p class="locked-msg" style="margin-top:10px;">🎉 Это был последний вопрос</p>`;
+      }
+    }
 
     container.innerHTML = `
       <div class="task-header-row">
@@ -177,13 +190,22 @@ window.addEventListener('pageshow', (event) => {
       ${bodyHTML}
 
       <div class="task-footer">
-        ${!isLocked ? `<button id="submitAnswerBtn" class="btn-check">Проверить</button>` : `<p class="locked-msg">🔒 Ответ зафиксирован (изменение невозможно)</p>`}
+        ${footerHTML}
       </div>
     `;
 
     if (!isLocked) {
       const submitBtn = document.getElementById('submitAnswerBtn');
       if (submitBtn) submitBtn.addEventListener('click', () => submitAnswer(task));
+    } else if (hasNext) {
+      const nextBtn = document.getElementById('nextTaskBtn');
+      if (nextBtn) {
+        nextBtn.addEventListener('click', () => {
+          currentTaskIndex = idx + 1;
+          renderSidebar();
+          renderQuestion(currentTaskIndex);
+        });
+      }
     }
   }
 
