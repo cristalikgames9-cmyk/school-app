@@ -8,23 +8,31 @@ const { createClient } = require('@supabase/supabase-js');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+const DATA_DIR = path.join(__dirname, 'data');
+const LESSONS_DIR = path.join(DATA_DIR, 'lessons');
 
 const supabaseUrl = process.env.SUPABASE_URL || 'https://placeholder.supabase.co';
 const supabaseKey = process.env.SUPABASE_KEY || 'placeholder-key';
 const supabase = createClient(supabaseUrl, supabaseKey);
 
-// Секрет для подписи куки — без него значение куки можно было бы подделать
-// (просто вписать чужой userId в браузере). Задай COOKIE_SECRET в .env на проде.
 const COOKIE_SECRET = process.env.COOKIE_SECRET || 'insecure-default-secret-change-me';
 
 app.set('trust proxy', 1);
 app.use(express.json());
 app.use(cookieParser(COOKIE_SECRET));
+
+// /api/* никогда не должен кэшироваться браузером/прокси — иначе после
+// логина можно на миг увидеть старый "неавторизован" ответ.
+app.use('/api', (req, res, next) => {
+  res.set('Cache-Control', 'no-store');
+  next();
+});
+
 app.use(express.static(path.join(__dirname, 'public')));
 
 function readJSON(filename) {
   try {
-    const filePath = path.join(__dirname, 'data', filename);
+    const filePath = path.join(DATA_DIR, filename);
     if (!fs.existsSync(filePath)) return null;
     return JSON.parse(fs.readFileSync(filePath, 'utf8'));
   } catch (e) {
@@ -32,14 +40,73 @@ function readJSON(filename) {
   }
 }
 
+// --- Загрузка уроков из data/lessons/<subjectId>/*.txt --------------------
+// Каждый файл — это JSON одного урока (title, videoUrl, content, tasks[...]).
+// Название папки — просто для порядка на диске, реальная привязка урока к
+// предмету идёт по полю "subjectId" внутри самого файла.
+let lessonsCache = null;
+let lessonsCacheAt = 0;
+const LESSONS_CACHE_TTL = 3000; // мс — чтобы не перечитывать диск на каждый чих
+
+function loadAllLessons() {
+  const now = Date.now();
+  if (lessonsCache && now - lessonsCacheAt < LESSONS_CACHE_TTL) return lessonsCache;
+
+  const lessons = [];
+  const seenIds = new Map();
+
+  if (fs.existsSync(LESSONS_DIR)) {
+    const subjectDirs = fs.readdirSync(LESSONS_DIR, { withFileTypes: true }).filter((d) => d.isDirectory());
+
+    for (const dirEntry of subjectDirs) {
+      const subjectFolder = dirEntry.name;
+      const subjectPath = path.join(LESSONS_DIR, subjectFolder);
+      const files = fs
+        .readdirSync(subjectPath)
+        .filter((f) => f.endsWith('.txt') || f.endsWith('.json'))
+        .sort(); // называй файлы "01-...", "02-..." для правильного порядка уроков
+
+      for (const file of files) {
+        const filePath = path.join(subjectPath, file);
+        try {
+          const raw = fs.readFileSync(filePath, 'utf8');
+          const lesson = JSON.parse(raw);
+
+          if (!lesson.id) {
+            console.warn(`⚠️  Урок без "id" пропущен: ${filePath}`);
+            continue;
+          }
+          if (!lesson.subjectId) lesson.subjectId = subjectFolder; // подстраховка
+
+          if (seenIds.has(lesson.id)) {
+            console.warn(
+              `⚠️  Дублирующийся id урока "${lesson.id}" в файлах ${seenIds.get(lesson.id)} и ${filePath} — ` +
+                `будет использован первый найденный. Сделай id уникальным на весь сайт.`
+            );
+            continue;
+          }
+
+          seenIds.set(lesson.id, filePath);
+          lessons.push(lesson);
+        } catch (e) {
+          console.error(`⚠️  Не удалось прочитать урок ${filePath}: ${e.message}`);
+        }
+      }
+    }
+  }
+
+  lessonsCache = lessons;
+  lessonsCacheAt = now;
+  return lessons;
+}
+
 const COOKIE_OPTIONS = {
   httpOnly: true,
-  maxAge: 30 * 24 * 3600 * 1000, // 30 дней — поэтому логиниться каждый раз не нужно
+  maxAge: 30 * 24 * 3600 * 1000,
   sameSite: 'lax',
   signed: true,
 };
 
-// Достаёт текущего пользователя из подписанной куки (без выброса 401, просто user=null)
 async function getCurrentUser(req) {
   const userId = req.signedCookies.userId;
   if (!userId) return null;
@@ -47,7 +114,6 @@ async function getCurrentUser(req) {
   return user || null;
 }
 
-// Требует авторизации — используется для действий, которые нельзя делать анонимно
 async function requireAuth(req, res, next) {
   const user = await getCurrentUser(req);
   if (!user) return res.status(401).json({ error: 'Нужно войти в аккаунт' });
@@ -55,7 +121,8 @@ async function requireAuth(req, res, next) {
   next();
 }
 
-// === API Авторизации ===
+// === API Авторизации =========================================================
+
 app.post('/api/auth/register', async (req, res) => {
   try {
     const username = String(req.body.username || '').trim();
@@ -114,15 +181,13 @@ app.post('/api/auth/logout', (req, res) => {
   res.json({ success: true });
 });
 
-// ЭТОТ БЛОК ВАЖЕН ДЛЯ РЕДИРЕКТА НА ГЛАВНОЙ + отдаёт прогресс для прогресс-бара
 app.get('/api/auth/me', async (req, res) => {
   try {
     const user = await getCurrentUser(req);
     if (!user) return res.json({ user: null });
 
-    const lessons = readJSON('lessons.json') || [];
-    const homeworks = readJSON('homeworks.json') || {};
-    const totalLessons = lessons.length;
+    const allLessons = loadAllLessons();
+    const totalLessons = allLessons.length;
 
     const { data: answers, error } = await supabase
       .from('answers')
@@ -135,9 +200,10 @@ app.get('/api/auth/me', async (req, res) => {
       answeredCountByLesson[a.lesson_id] = (answeredCountByLesson[a.lesson_id] || 0) + 1;
     });
 
-    // Урок считается пройденным, когда отвечено на все его задачи
+    const lessonsById = Object.fromEntries(allLessons.map((l) => [l.id, l]));
     const completedLessonIds = Object.keys(answeredCountByLesson).filter((lessonId) => {
-      const totalTasks = (homeworks[lessonId] || []).length;
+      const lesson = lessonsById[lessonId];
+      const totalTasks = lesson && lesson.tasks ? lesson.tasks.length : 0;
       return totalTasks > 0 && answeredCountByLesson[lessonId] >= totalTasks;
     });
 
@@ -153,7 +219,8 @@ app.get('/api/auth/me', async (req, res) => {
   }
 });
 
-// === API Предметов и Уроков ===
+// === API Предметов и Уроков ===================================================
+
 app.get('/api/subjects', (req, res) => {
   res.json(readJSON('subjects.json') || []);
 });
@@ -161,30 +228,29 @@ app.get('/api/subjects', (req, res) => {
 app.get('/api/subjects/:id', (req, res) => {
   const subjectId = req.params.id;
   const subjects = readJSON('subjects.json') || [];
-  const lessons = readJSON('lessons.json') || [];
-
   const subject = subjects.find((s) => String(s.id) === String(subjectId));
   if (!subject) return res.status(404).json({ error: 'Предмет не найден' });
 
-  const subjectLessons = lessons.filter((l) => String(l.subjectId) === String(subjectId));
+  const subjectLessons = loadAllLessons()
+    .filter((l) => String(l.subjectId) === String(subjectId))
+    .map(({ tasks, ...rest }) => rest); // задачи на этой странице не нужны
+
   res.json({ subject, lessons: subjectLessons });
 });
 
 app.get('/api/lessons/:id', (req, res) => {
-  const lessons = readJSON('lessons.json') || [];
-  const lesson = lessons.find((l) => String(l.id) === String(req.params.id));
+  const lesson = loadAllLessons().find((l) => String(l.id) === String(req.params.id));
   if (!lesson) return res.status(404).json({ error: 'Урок не найден' });
-  res.json(lesson);
+  const { tasks, ...rest } = lesson;
+  res.json(rest);
 });
 
-// === API Домашних заданий ===
+// === API Домашних заданий =====================================================
 
-// Отдаёт задачи урока + (если пользователь вошёл) его уже сохранённые ответы
 app.get('/api/homework/:lessonId', async (req, res) => {
   try {
-    const homeworks = readJSON('homeworks.json') || {};
-    const tasks = homeworks[req.params.lessonId];
-    if (!tasks) return res.status(404).json({ error: 'Задание не найдено' });
+    const lesson = loadAllLessons().find((l) => String(l.id) === String(req.params.lessonId));
+    if (!lesson || !lesson.tasks) return res.status(404).json({ error: 'Задание не найдено' });
 
     let savedAnswers = [];
     const user = await getCurrentUser(req);
@@ -198,14 +264,13 @@ app.get('/api/homework/:lessonId', async (req, res) => {
       savedAnswers = data || [];
     }
 
-    res.json({ tasks, savedAnswers });
+    res.json({ tasks: lesson.tasks, savedAnswers });
   } catch (err) {
     console.error('homework get error:', err.message || err);
     res.status(500).json({ error: 'Ошибка загрузки задания' });
   }
 });
 
-// Сохраняет ответ на один вопрос (требует авторизации)
 app.post('/api/homework/:lessonId/submit', requireAuth, async (req, res) => {
   try {
     const { questionId, status, selectedOptions } = req.body;
@@ -232,4 +297,7 @@ app.post('/api/homework/:lessonId/submit', requireAuth, async (req, res) => {
   }
 });
 
-app.listen(PORT, () => console.log(`🚀 Сервер запущен на порту ${PORT}`));
+app.listen(PORT, () => {
+  console.log(`🚀 Сервер запущен на порту ${PORT}`);
+  console.log(`📚 Найдено уроков: ${loadAllLessons().length}`);
+});

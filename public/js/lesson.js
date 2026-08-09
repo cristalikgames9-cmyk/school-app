@@ -1,9 +1,14 @@
+// Если страница восстановлена из кэша браузера (кнопка "назад") — уходим в меню.
+window.addEventListener('pageshow', (event) => {
+  if (event.persisted) window.location.replace('/index.html');
+});
+
 document.addEventListener('DOMContentLoaded', async () => {
   // Без аккаунта прогресс не сохранится — отправляем на вход
-  const meRes = await fetch('/api/auth/me');
+  const meRes = await fetch('/api/auth/me', { cache: 'no-store' });
   const meData = await meRes.json();
   if (!meData.user) {
-    window.location.href = '/login.html';
+    window.location.replace('/login.html');
     return;
   }
 
@@ -22,15 +27,15 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   try {
-    const res = await fetch(`/api/lessons/${lessonId}`);
+    const res = await fetch(`/api/lessons/${lessonId}`, { cache: 'no-store' });
     const lesson = await res.json();
     if (!res.ok) throw new Error(lesson.error || 'Ошибка загрузки урока');
 
     if (titleEl) titleEl.textContent = lesson.title;
     if (descEl) descEl.textContent = lesson.content || lesson.theory || '';
 
-    if (videoFrame && videoBox && lesson.videoId) {
-      videoFrame.src = `https://kinescope.io/embed/${lesson.videoId}`;
+    if (videoFrame && videoBox && lesson.videoUrl) {
+      videoFrame.src = lesson.videoUrl;
       videoBox.style.display = 'block';
     }
 

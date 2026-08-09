@@ -1,0 +1,166 @@
+{
+  "id": "math-1",
+  "subjectId": "math",
+  "title": "Урок 1. Число и цифра 1",
+  "videoUrl": "PASTE_EMBED_URL_HERE",
+  "content": "Учимся считать до одного и узнаём, как выглядит цифра 1.",
+  "tasks": [
+    {
+      "id": "q1",
+      "type": "normal",
+      "question": "Сколько яблок на картинке, если нарисовано только одно яблоко?",
+      "image": null,
+      "options": [
+        {
+          "id": "A",
+          "text": "0"
+        },
+        {
+          "id": "B",
+          "text": "1"
+        },
+        {
+          "id": "C",
+          "text": "2"
+        }
+      ],
+      "correctAnswer": "B"
+    },
+    {
+      "id": "q2",
+      "type": "normal",
+      "question": "Найди цифру 1 среди других цифр.",
+      "image": null,
+      "options": [
+        {
+          "id": "A",
+          "text": "7"
+        },
+        {
+          "id": "B",
+          "text": "1"
+        },
+        {
+          "id": "C",
+          "text": "3"
+        }
+      ],
+      "correctAnswer": "B"
+    },
+    {
+      "id": "q3",
+      "type": "multiple",
+      "question": "Отметь ВСЕ картинки, где предметов ровно один.",
+      "image": null,
+      "options": [
+        {
+          "id": "A",
+          "text": "1 солнце"
+        },
+        {
+          "id": "B",
+          "text": "2 яблока"
+        },
+        {
+          "id": "C",
+          "text": "1 мяч"
+        },
+        {
+          "id": "D",
+          "text": "3 звезды"
+        }
+      ],
+      "correctAnswer": [
+        "A",
+        "C"
+      ]
+    },
+    {
+      "id": "q4",
+      "type": "normal",
+      "question": "Как правильно написать цифру 1: сверху вниз, с наклонной чёрточкой слева?",
+      "image": null,
+      "options": [
+        {
+          "id": "A",
+          "text": "Да"
+        },
+        {
+          "id": "B",
+          "text": "Нет"
+        }
+      ],
+      "correctAnswer": "A"
+    },
+    {
+      "id": "q5",
+      "type": "normal",
+      "question": "Что идёт после числа 1 при счёте?",
+      "image": null,
+      "options": [
+        {
+          "id": "A",
+          "text": "0"
+        },
+        {
+          "id": "B",
+          "text": "2"
+        },
+        {
+          "id": "C",
+          "text": "3"
+        }
+      ],
+      "correctAnswer": "B"
+    },
+    {
+      "id": "q6",
+      "type": "multiple",
+      "question": "Отметь ВСЕ верные равенства с числом 1.",
+      "image": null,
+      "options": [
+        {
+          "id": "A",
+          "text": "1 = 1"
+        },
+        {
+          "id": "B",
+          "text": "1 больше 2"
+        },
+        {
+          "id": "C",
+          "text": "1 меньше 2"
+        },
+        {
+          "id": "D",
+          "text": "1 равно 0"
+        }
+      ],
+      "correctAnswer": [
+        "A",
+        "C"
+      ]
+    },
+    {
+      "id": "q7",
+      "type": "normal",
+      "question": "Сколько носов у одного котёнка?",
+      "image": null,
+      "options": [
+        {
+          "id": "A",
+          "text": "1"
+        },
+        {
+          "id": "B",
+          "text": "2"
+        },
+        {
+          "id": "C",
+          "text": "0"
+        }
+      ],
+      "correctAnswer": "A"
+    }
+  ]
+}

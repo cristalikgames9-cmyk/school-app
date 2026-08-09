@@ -1,9 +1,16 @@
+// Если страница восстановлена из кэша браузера (кнопка "назад") — не
+// показываем потенциально устаревшее/сломанное состояние, уходим в меню.
+window.addEventListener('pageshow', (event) => {
+  if (event.persisted) window.location.replace('/index.html');
+});
+
 document.addEventListener('DOMContentLoaded', async () => {
-  // Без аккаунта прогресс не сохранится — отправляем на вход
-  const meRes = await fetch('/api/auth/me');
+  // Без аккаунта прогресс не сохранится — отправляем на вход.
+  // cache: 'no-store' — чтобы не получить закэшированный старый ответ.
+  const meRes = await fetch('/api/auth/me', { cache: 'no-store' });
   const meData = await meRes.json();
   if (!meData.user) {
-    window.location.href = '/login.html';
+    window.location.replace('/login.html');
     return;
   }
 
@@ -20,7 +27,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   try {
-    const res = await fetch(`/api/subjects/${subjectId}`);
+    const res = await fetch(`/api/subjects/${subjectId}`, { cache: 'no-store' });
     const data = await res.json();
 
     if (!res.ok) throw new Error(data.error || 'Ошибка сервера');

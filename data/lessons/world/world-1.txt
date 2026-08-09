@@ -1,0 +1,162 @@
+{
+  "id": "world-1",
+  "subjectId": "world",
+  "title": "Урок 1. Времена года",
+  "videoUrl": "PASTE_EMBED_URL_HERE",
+  "content": "Изучаем, чем отличаются зима, весна, лето и осень.",
+  "tasks": [
+    {
+      "id": "q1",
+      "type": "normal",
+      "question": "Сколько всего времён года?",
+      "image": null,
+      "options": [
+        {
+          "id": "A",
+          "text": "2"
+        },
+        {
+          "id": "B",
+          "text": "3"
+        },
+        {
+          "id": "C",
+          "text": "4"
+        }
+      ],
+      "correctAnswer": "C"
+    },
+    {
+      "id": "q2",
+      "type": "multiple",
+      "question": "Отметь ВСЕ признаки зимы.",
+      "image": null,
+      "options": [
+        {
+          "id": "A",
+          "text": "Снег"
+        },
+        {
+          "id": "B",
+          "text": "Жара"
+        },
+        {
+          "id": "C",
+          "text": "Мороз"
+        },
+        {
+          "id": "D",
+          "text": "Цветущие сады"
+        }
+      ],
+      "correctAnswer": [
+        "A",
+        "C"
+      ]
+    },
+    {
+      "id": "q3",
+      "type": "normal",
+      "question": "Какое время года идёт после зимы?",
+      "image": null,
+      "options": [
+        {
+          "id": "A",
+          "text": "Лето"
+        },
+        {
+          "id": "B",
+          "text": "Весна"
+        },
+        {
+          "id": "C",
+          "text": "Осень"
+        }
+      ],
+      "correctAnswer": "B"
+    },
+    {
+      "id": "q4",
+      "type": "normal",
+      "question": "Когда листья желтеют и опадают?",
+      "image": null,
+      "options": [
+        {
+          "id": "A",
+          "text": "Осенью"
+        },
+        {
+          "id": "B",
+          "text": "Летом"
+        }
+      ],
+      "correctAnswer": "A"
+    },
+    {
+      "id": "q5",
+      "type": "multiple",
+      "question": "Отметь ВСЕ признаки лета.",
+      "image": null,
+      "options": [
+        {
+          "id": "A",
+          "text": "Тепло"
+        },
+        {
+          "id": "B",
+          "text": "Снегопад"
+        },
+        {
+          "id": "C",
+          "text": "Купание в реке"
+        },
+        {
+          "id": "D",
+          "text": "Ледоход"
+        }
+      ],
+      "correctAnswer": [
+        "A",
+        "C"
+      ]
+    },
+    {
+      "id": "q6",
+      "type": "normal",
+      "question": "Сколько месяцев длится, как правило, каждое время года?",
+      "image": null,
+      "options": [
+        {
+          "id": "A",
+          "text": "2"
+        },
+        {
+          "id": "B",
+          "text": "3"
+        },
+        {
+          "id": "C",
+          "text": "5"
+        }
+      ],
+      "correctAnswer": "B"
+    },
+    {
+      "id": "q7",
+      "type": "normal",
+      "question": "Весной птицы прилетают или улетают в тёплые края?",
+      "image": null,
+      "options": [
+        {
+          "id": "A",
+          "text": "Прилетают"
+        },
+        {
+          "id": "B",
+          "text": "Улетают"
+        }
+      ],
+      "correctAnswer": "A"
+    }
+  ]
+}

@@ -1,0 +1,158 @@
+{
+  "id": "russian-1",
+  "subjectId": "russian",
+  "title": "Урок 1. Гласные и согласные звуки",
+  "videoUrl": "PASTE_EMBED_URL_HERE",
+  "content": "Учимся различать гласные и согласные звуки в словах.",
+  "tasks": [
+    {
+      "id": "q1",
+      "type": "normal",
+      "question": "Гласные звуки образуют голос и...",
+      "image": null,
+      "options": [
+        {
+          "id": "A",
+          "text": "воздух свободно проходит"
+        },
+        {
+          "id": "B",
+          "text": "воздух встречает преграду"
+        }
+      ],
+      "correctAnswer": "A"
+    },
+    {
+      "id": "q2",
+      "type": "multiple",
+      "question": "Отметь ВСЕ согласные буквы.",
+      "image": null,
+      "options": [
+        {
+          "id": "A",
+          "text": "Р"
+        },
+        {
+          "id": "B",
+          "text": "Е"
+        },
+        {
+          "id": "C",
+          "text": "Н"
+        },
+        {
+          "id": "D",
+          "text": "Ы"
+        }
+      ],
+      "correctAnswer": [
+        "A",
+        "C"
+      ]
+    },
+    {
+      "id": "q3",
+      "type": "normal",
+      "question": "Сколько гласных букв в русском алфавите обычно изучают в 1 классе первыми?",
+      "image": null,
+      "options": [
+        {
+          "id": "A",
+          "text": "А, О, У, Ы, И, Э"
+        },
+        {
+          "id": "B",
+          "text": "Б, В, Г"
+        }
+      ],
+      "correctAnswer": "A"
+    },
+    {
+      "id": "q4",
+      "type": "normal",
+      "question": "Слово «ДОМ» — сколько в нём согласных звуков?",
+      "image": null,
+      "options": [
+        {
+          "id": "A",
+          "text": "1"
+        },
+        {
+          "id": "B",
+          "text": "2"
+        },
+        {
+          "id": "C",
+          "text": "3"
+        }
+      ],
+      "correctAnswer": "B"
+    },
+    {
+      "id": "q5",
+      "type": "multiple",
+      "question": "Отметь ВСЕ слова, где есть звук [м].",
+      "image": null,
+      "options": [
+        {
+          "id": "A",
+          "text": "Мама"
+        },
+        {
+          "id": "B",
+          "text": "Папа"
+        },
+        {
+          "id": "C",
+          "text": "Сом"
+        },
+        {
+          "id": "D",
+          "text": "Кот"
+        }
+      ],
+      "correctAnswer": [
+        "A",
+        "C"
+      ]
+    },
+    {
+      "id": "q6",
+      "type": "normal",
+      "question": "Согласный звук на письме может обозначаться...",
+      "image": null,
+      "options": [
+        {
+          "id": "A",
+          "text": "только буквой"
+        },
+        {
+          "id": "B",
+          "text": "буквой"
+        }
+      ],
+      "correctAnswer": "B"
+    },
+    {
+      "id": "q7",
+      "type": "normal",
+      "question": "Сколько слогов в слове «РУ-ЧКА»?",
+      "image": null,
+      "options": [
+        {
+          "id": "A",
+          "text": "1"
+        },
+        {
+          "id": "B",
+          "text": "2"
+        },
+        {
+          "id": "C",
+          "text": "3"
+        }
+      ],
+      "correctAnswer": "B"
+    }
+  ]
+}

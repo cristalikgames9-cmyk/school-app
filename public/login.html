@@ -144,7 +144,22 @@
   </div>
 
   <script>
+  <script>
+    // Если страница входа восстановлена из кэша браузера (кнопка "назад")
+    // после того как мы уже вошли — перезапрашиваем состояние.
+    window.addEventListener('pageshow', (event) => {
+      if (event.persisted) window.location.reload();
+    });
+
     let currentMode = 'login';
+
+    // Если пользователь уже вошёл — форма входа ему не нужна
+    fetch('/api/auth/me', { cache: 'no-store' })
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.user) window.location.replace('/index.html');
+      })
+      .catch(() => {});
 
     function switchTab(mode) {
       currentMode = mode;
@@ -183,13 +198,16 @@
         const res = await fetch(endpoint, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ username, password })
+          body: JSON.stringify({ username, password }),
+          cache: 'no-store'
         });
 
         const data = await res.json();
 
         if (res.ok) {
-          window.location.href = '/';
+          // replace() вместо href — чтобы кнопка "назад" не возвращала
+          // на форму входа после успешного входа/регистрации
+          window.location.replace('/index.html');
         } else {
           errorMsg.textContent = data.error || 'Произошла ошибка';
           errorMsg.style.display = 'block';

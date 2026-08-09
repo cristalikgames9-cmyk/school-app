@@ -1,0 +1,162 @@
+{
+  "id": "reading-1",
+  "subjectId": "lit",
+  "title": "Урок 1. Звуки и буквы",
+  "videoUrl": "PASTE_EMBED_URL_HERE",
+  "content": "Знакомимся с гласными и согласными звуками.",
+  "tasks": [
+    {
+      "id": "q1",
+      "type": "normal",
+      "question": "Какой звук мы можем пропеть — гласный или согласный?",
+      "image": null,
+      "options": [
+        {
+          "id": "A",
+          "text": "Гласный"
+        },
+        {
+          "id": "B",
+          "text": "Согласный"
+        }
+      ],
+      "correctAnswer": "A"
+    },
+    {
+      "id": "q2",
+      "type": "multiple",
+      "question": "Отметь ВСЕ гласные буквы.",
+      "image": null,
+      "options": [
+        {
+          "id": "A",
+          "text": "А"
+        },
+        {
+          "id": "B",
+          "text": "Б"
+        },
+        {
+          "id": "C",
+          "text": "О"
+        },
+        {
+          "id": "D",
+          "text": "М"
+        }
+      ],
+      "correctAnswer": [
+        "A",
+        "C"
+      ]
+    },
+    {
+      "id": "q3",
+      "type": "normal",
+      "question": "Сколько слогов в слове «МА-МА»?",
+      "image": null,
+      "options": [
+        {
+          "id": "A",
+          "text": "1"
+        },
+        {
+          "id": "B",
+          "text": "2"
+        },
+        {
+          "id": "C",
+          "text": "3"
+        }
+      ],
+      "correctAnswer": "B"
+    },
+    {
+      "id": "q4",
+      "type": "normal",
+      "question": "Какая буква первая в слове «ШКОЛА»?",
+      "image": null,
+      "options": [
+        {
+          "id": "A",
+          "text": "Ш"
+        },
+        {
+          "id": "B",
+          "text": "К"
+        },
+        {
+          "id": "C",
+          "text": "О"
+        }
+      ],
+      "correctAnswer": "A"
+    },
+    {
+      "id": "q5",
+      "type": "multiple",
+      "question": "Отметь ВСЕ слова, которые начинаются на согласный звук.",
+      "image": null,
+      "options": [
+        {
+          "id": "A",
+          "text": "Утка"
+        },
+        {
+          "id": "B",
+          "text": "Кот"
+        },
+        {
+          "id": "C",
+          "text": "Слон"
+        },
+        {
+          "id": "D",
+          "text": "Аист"
+        }
+      ],
+      "correctAnswer": [
+        "B",
+        "C"
+      ]
+    },
+    {
+      "id": "q6",
+      "type": "normal",
+      "question": "Можно ли пропеть согласный звук так же протяжно, как гласный?",
+      "image": null,
+      "options": [
+        {
+          "id": "A",
+          "text": "Да"
+        },
+        {
+          "id": "B",
+          "text": "Нет"
+        }
+      ],
+      "correctAnswer": "B"
+    },
+    {
+      "id": "q7",
+      "type": "normal",
+      "question": "Сколько гласных звуков в слове «ОСА»?",
+      "image": null,
+      "options": [
+        {
+          "id": "A",
+          "text": "1"
+        },
+        {
+          "id": "B",
+          "text": "2"
+        },
+        {
+          "id": "C",
+          "text": "3"
+        }
+      ],
+      "correctAnswer": "B"
+    }
+  ]
+}
