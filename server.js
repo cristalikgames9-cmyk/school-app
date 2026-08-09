@@ -266,11 +266,14 @@ app.get('/api/lessons/:id', (req, res) => {
 // === API Домашних заданий =====================================================
 
 app.get('/api/homework/:lessonId', async (req, res) => {
-  try {
-    const lesson = loadAllLessons().find((l) => String(l.id) === String(req.params.lessonId));
-    if (!lesson || !lesson.tasks) return res.status(404).json({ error: 'Задание не найдено' });
+  const lesson = loadAllLessons().find((l) => String(l.id) === String(req.params.lessonId));
+  if (!lesson || !lesson.tasks) return res.status(404).json({ error: 'Задание не найдено' });
 
-    let savedAnswers = [];
+  // Сохранённые ответы — best-effort: если Supabase недоступна или таблицы
+  // answers ещё нет, всё равно показываем задания, просто без пометок о
+  // том, что уже отвечено (раньше это валило всю страницу ошибкой 500).
+  let savedAnswers = [];
+  try {
     const user = await getCurrentUser(req);
     if (user) {
       const { data, error } = await supabase
@@ -281,12 +284,11 @@ app.get('/api/homework/:lessonId', async (req, res) => {
       if (error) throw error;
       savedAnswers = data || [];
     }
-
-    res.json({ tasks: lesson.tasks, savedAnswers });
   } catch (err) {
-    console.error('homework get error:', err.message || err);
-    res.status(500).json({ error: 'Ошибка загрузки задания' });
+    console.error('homework get: не удалось получить сохранённые ответы (проверь таблицу answers в Supabase):', err.message || err);
   }
+
+  res.json({ tasks: lesson.tasks, savedAnswers });
 });
 
 app.post('/api/homework/:lessonId/submit', requireAuth, async (req, res) => {
