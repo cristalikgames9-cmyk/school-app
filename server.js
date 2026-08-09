@@ -110,7 +110,14 @@ const COOKIE_OPTIONS = {
 async function getCurrentUser(req) {
   const userId = req.signedCookies.userId;
   if (!userId) return null;
-  const { data: user } = await supabase.from('users').select('id, username').eq('id', userId).maybeSingle();
+  const { data: user, error } = await supabase.from('users').select('id, username').eq('id', userId).maybeSingle();
+  if (error) {
+    console.error('getCurrentUser: ошибка запроса к Supabase:', error.message);
+    return null;
+  }
+  if (!user) {
+    console.warn(`getCurrentUser: кука есть (userId=${userId}), но пользователь с таким id не найден в таблице users`);
+  }
   return user || null;
 }
 
@@ -182,10 +189,14 @@ app.post('/api/auth/logout', (req, res) => {
 });
 
 app.get('/api/auth/me', async (req, res) => {
-  try {
-    const user = await getCurrentUser(req);
-    if (!user) return res.json({ user: null });
+  // Сначала строго проверяем авторизацию — независимо от того, получится
+  // ли посчитать прогресс. Раньше ошибка в блоке ниже (например, если
+  // таблицы answers ещё нет в Supabase) "маскировала" уже успешный вход,
+  // и авторизованный пользователь ошибочно выглядел как гость.
+  const user = await getCurrentUser(req);
+  if (!user) return res.json({ user: null });
 
+  try {
     const allLessons = loadAllLessons();
     const totalLessons = allLessons.length;
 
@@ -214,8 +225,15 @@ app.get('/api/auth/me', async (req, res) => {
       completedLessonIds,
     });
   } catch (err) {
-    console.error('me error:', err.message || err);
-    res.json({ user: null });
+    // Прогресс не посчитался (например, нет таблицы answers в Supabase) —
+    // но пользователь точно вошёл, поэтому user всё равно возвращаем.
+    console.error('me: ошибка подсчёта прогресса (проверь таблицу answers в Supabase):', err.message || err);
+    res.json({
+      user: { id: user.id, username: user.username },
+      totalLessons: 0,
+      completedLessons: 0,
+      completedLessonIds: [],
+    });
   }
 });
 

@@ -1,76 +1,221 @@
-<script>
-  // Если страница входа восстановлена из кэша браузера (кнопка "назад")
-  // после того как мы уже вошли — перезапрашиваем состояние.
-  window.addEventListener('pageshow', (event) => {
-    if (event.persisted) window.location.reload();
-  });
-
-  let currentMode = 'login';
-
-  // Если пользователь уже вошёл — форма входа ему не нужна
-  fetch('/api/auth/me', { 
-    cache: 'no-store',
-    credentials: 'include' 
-  })
-    .then((r) => r.json())
-    .then((data) => {
-      if (data.user) window.location.replace('/index.html');
-    })
-    .catch(() => {});
-
-  function switchTab(mode) {
-    currentMode = mode;
-    const loginBtn = document.getElementById('loginTabBtn');
-    const registerBtn = document.getElementById('registerTabBtn');
-    const submitBtn = document.getElementById('submitBtn');
-    const errorMsg = document.getElementById('errorMsg');
-    errorMsg.style.display = 'none';
-
-    if (mode === 'login') {
-      loginBtn.classList.add('active');
-      registerBtn.classList.remove('active');
-      submitBtn.textContent = 'Войти';
-    } else {
-      registerBtn.classList.add('active');
-      loginBtn.classList.remove('active');
-      submitBtn.textContent = 'Зарегистрироваться';
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Damir Online School — Вход и Регистрация</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <style>
+    body {
+      background: linear-gradient(135deg, #6366f1 0%, #a855f7 50%, #ec4899 100%);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin: 0;
+      font-family: system-ui, -apple-system, sans-serif;
     }
-  }
-
-  document.getElementById('authForm').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const username = document.getElementById('username').value.trim();
-    const password = document.getElementById('password').value.trim();
-    const errorMsg = document.getElementById('errorMsg');
-
-    if (username.length < 4 || username.length > 12 || password.length < 4 || password.length > 12) {
-      errorMsg.textContent = 'Логин и пароль должны быть от 4 до 12 символов!';
-      errorMsg.style.display = 'block';
-      return;
+    .auth-card {
+      background: #ffffff;
+      padding: 40px;
+      border-radius: 24px;
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+      width: 100%;
+      max-width: 400px;
+      box-sizing: border-box;
     }
+    .school-title {
+      font-size: 22px;
+      font-weight: 800;
+      text-align: center;
+      color: #4f46e5;
+      margin-bottom: 4px;
+    }
+    .auth-subtitle {
+      font-size: 14px;
+      color: #64748b;
+      text-align: center;
+      margin-bottom: 24px;
+    }
+    .tabs {
+      display: flex;
+      background: #f1f5f9;
+      border-radius: 12px;
+      padding: 4px;
+      margin-bottom: 24px;
+    }
+    .tab-btn {
+      flex: 1;
+      padding: 10px;
+      border: none;
+      background: transparent;
+      font-weight: 600;
+      font-size: 14px;
+      cursor: pointer;
+      border-radius: 8px;
+      color: #64748b;
+      transition: all 0.2s;
+    }
+    .tab-btn.active {
+      background: #ffffff;
+      color: #4f46e5;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
+    .form-group {
+      margin-bottom: 16px;
+    }
+    .form-label {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 6px;
+      color: #334155;
+    }
+    .form-input {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid #cbd5e1;
+      border-radius: 10px;
+      font-size: 14px;
+      box-sizing: border-box;
+      transition: border-color 0.2s;
+    }
+    .form-input:focus {
+      outline: none;
+      border-color: #6366f1;
+      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+    }
+    .form-hint {
+      font-size: 11px;
+      color: #94a3b8;
+      margin-top: 4px;
+    }
+    .submit-btn {
+      width: 100%;
+      padding: 12px;
+      background: #4f46e5;
+      color: white;
+      border: none;
+      border-radius: 10px;
+      font-weight: 600;
+      font-size: 15px;
+      cursor: pointer;
+      transition: background 0.2s;
+      margin-top: 8px;
+    }
+    .submit-btn:hover {
+      background: #4338ca;
+    }
+    .error-msg {
+      color: #ef4444;
+      font-size: 13px;
+      margin-top: 12px;
+      text-align: center;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="auth-card">
+    <div class="school-title">🎓 Damir Online School</div>
+    <div class="auth-subtitle">Платформа для увлекательного обучения</div>
 
-    const endpoint = currentMode === 'login' ? '/api/auth/login' : '/api/auth/register';
+    <div class="tabs">
+      <button class="tab-btn active" id="loginTabBtn" onclick="switchTab('login')">Вход</button>
+      <button class="tab-btn" id="registerTabBtn" onclick="switchTab('register')">Регистрация</button>
+    </div>
 
-    try {
-      const res = await fetch(endpoint, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password }),
-        cache: 'no-store',
-        credentials: 'include'
-      });
+    <form id="authForm">
+      <div class="form-group">
+        <label class="form-label">Логин</label>
+        <input type="text" id="username" class="form-input" placeholder="Введите логин" required minlength="4" maxlength="12">
+        <div class="form-hint">От 4 до 12 символов</div>
+      </div>
+      
+      <div class="form-group">
+        <label class="form-label">Пароль</label>
+        <input type="password" id="password" class="form-input" placeholder="Введите пароль" required minlength="4" maxlength="12">
+        <div class="form-hint">От 4 до 12 символов</div>
+      </div>
 
-      const data = await res.json();
+      <button type="submit" id="submitBtn" class="submit-btn">Войти</button>
+      <div id="errorMsg" class="error-msg"></div>
+    </form>
+  </div>
 
-      if (res.ok) {
-        window.location.replace('/index.html');
+  <script>
+    // Если страница входа восстановлена из кэша браузера (кнопка "назад")
+    // после того как мы уже вошли — перезапрашиваем состояние.
+    window.addEventListener('pageshow', (event) => {
+      if (event.persisted) window.location.reload();
+    });
+
+    let currentMode = 'login';
+
+    // Если пользователь уже вошёл — форма входа ему не нужна
+    fetch('/api/auth/me', { cache: 'no-store' })
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.user) window.location.replace('/index.html');
+      })
+      .catch(() => {});
+
+    function switchTab(mode) {
+      currentMode = mode;
+      const loginBtn = document.getElementById('loginTabBtn');
+      const registerBtn = document.getElementById('registerTabBtn');
+      const submitBtn = document.getElementById('submitBtn');
+      const errorMsg = document.getElementById('errorMsg');
+      errorMsg.style.display = 'none';
+
+      if (mode === 'login') {
+        loginBtn.classList.add('active');
+        registerBtn.classList.remove('active');
+        submitBtn.textContent = 'Войти';
       } else {
-        errorMsg.textContent = data.error || 'Произошла ошибка';
+        registerBtn.classList.add('active');
+        loginBtn.classList.remove('active');
+        submitBtn.textContent = 'Зарегистрироваться';
+      }
+    }
+
+    document.getElementById('authForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const username = document.getElementById('username').value.trim();
+      const password = document.getElementById('password').value.trim();
+      const errorMsg = document.getElementById('errorMsg');
+
+      if (username.length < 4 || username.length > 12 || password.length < 4 || password.length > 12) {
+        errorMsg.textContent = 'Логин и пароль должны быть от 4 до 12 символов!';
+        errorMsg.style.display = 'block';
+        return;
+      }
+
+      const endpoint = currentMode === 'login' ? '/api/auth/login' : '/api/auth/register';
+
+      try {
+        const res = await fetch(endpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, password }),
+          cache: 'no-store'
+        });
+
+        const data = await res.json();
+
+        if (res.ok) {
+          // replace() вместо href — чтобы кнопка "назад" не возвращала
+          // на форму входа после успешного входа/регистрации
+          window.location.replace('/index.html');
+        } else {
+          errorMsg.textContent = data.error || 'Произошла ошибка';
+          errorMsg.style.display = 'block';
+        }
+      } catch (err) {
+        errorMsg.textContent = 'Ошибка соединения с сервером';
         errorMsg.style.display = 'block';
       }
-    } catch (err) {
-      errorMsg.textContent = 'Ошибка соединения с сервером';
-      errorMsg.style.display = 'block';
-    }
-  });
-</script>
+    });
+  </script>
+</body>
+</html>
