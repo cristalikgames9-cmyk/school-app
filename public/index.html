@@ -3,20 +3,24 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Школа №1 — Главная</title>
+  <title>Damir Online School — Главная</title>
   <!-- Важно: ведущий слэш /css/style.css -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
   <header class="header">
     <div class="header-container">
       <a href="/" class="logo">
-        <span class="logo-text">Школа №1</span>
+        <span class="logo-badge">🎓</span>
+        <span class="logo-text">Damir Online School</span>
       </a>
       <div id="userBlock" class="user-info">
         <span id="userName">👋 Гость</span>
         <button id="logoutBtn" class="btn-logout" style="display:none;">Выйти</button>
-        <a id="loginBtn" href="/login.html" class="btn-primary" style="display:none;padding:8px 16px;font-size:13px;">Войти</a>
+        <a id="loginBtn" href="/login.html" class="btn-primary btn-sm" style="display:none;">Войти</a>
       </div>
     </div>
   </header>
@@ -25,13 +29,11 @@
     <h1 id="welcomeText" class="main-title">Привет!</h1>
     <p class="subtitle">Все уроки и задания за 1 класс собраны здесь</p>
 
-    <div id="progressBox" class="progress-card" style="display: none; margin: 16px 0;">
-      <p id="progressText">0 из 0 уроков пройдено 0%</p>
+    <div id="progressBox" class="progress-card" style="display: none;">
+      <div id="progressText">0 из 0 уроков пройдено</div>
     </div>
 
-    <div id="subjectsList" class="subjects-grid" style="margin-top: 24px;">
-      <!-- Предметы подгружаются из index.js -->
-    </div>
+    <div id="subjectsList" class="subjects-grid"></div>
   </main>
 
   <script>

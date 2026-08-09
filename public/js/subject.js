@@ -40,12 +40,16 @@ document.addEventListener('DOMContentLoaded', async () => {
       } else {
         // Рендерим уроки с сохранением твоих классов
         const completedIds = meData.completedLessonIds || [];
-        lessonsList.innerHTML = data.lessons.map(l => {
+        lessonsList.innerHTML = data.lessons.map((l, i) => {
           const isDone = completedIds.includes(l.id);
           return `
           <div class="lesson-card ${isDone ? 'completed' : ''}">
-            <h4>${l.title || 'Урок'} ${isDone ? '<span class="check-badge">✅</span>' : ''}</h4>
-            <a href="/lesson.html?id=${l.id}" class="btn-primary">Перейти к уроку</a>
+            <span class="lesson-num">${i + 1}</span>
+            <div class="lesson-body">
+              <h4>${l.title || 'Урок'}</h4>
+              ${isDone ? '<span class="done-pill">✓ Пройдено</span>' : ''}
+            </div>
+            <a href="/lesson.html?id=${l.id}" class="btn-primary btn-sm">Перейти →</a>
           </div>
         `;
         }).join('');

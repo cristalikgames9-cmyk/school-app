@@ -30,7 +30,13 @@ document.addEventListener('DOMContentLoaded', async () => {
 
       if (progressBox && progressText && authData.totalLessons > 0) {
         const pct = Math.round((authData.completedLessons / authData.totalLessons) * 100);
-        progressText.textContent = `${authData.completedLessons} из ${authData.totalLessons} уроков пройдено (${pct}%)`;
+        progressText.innerHTML = `
+          <div class="progress-top-row">
+            <span>Твой прогресс</span>
+            <span>${authData.completedLessons} из ${authData.totalLessons} · ${pct}%</span>
+          </div>
+          <div class="progress-track"><div class="progress-fill" style="width:${pct}%"></div></div>
+        `;
         progressBox.style.display = 'block';
       }
     } else {
@@ -58,8 +64,9 @@ document.addEventListener('DOMContentLoaded', async () => {
       .map(
         (s) => `
       <a href="/subject.html?id=${s.id}" class="subject-card">
+        <span class="subject-icon">${s.icon || '📘'}</span>
+        ${s.grade ? `<span class="subject-eyebrow">${s.grade}</span>` : ''}
         <h3>${s.title || s.name}</h3>
-        <p>${s.description || ''}</p>
       </a>
     `
       )
