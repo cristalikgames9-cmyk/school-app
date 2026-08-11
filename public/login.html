@@ -4,6 +4,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Damir Online School — Вход и Регистрация</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/css/style.css">
   <style>
     body {
@@ -113,6 +116,26 @@
       text-align: center;
       display: none;
     }
+    .newsletter-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      margin-top: 4px;
+    }
+    .newsletter-row input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      flex-shrink: 0;
+      margin-top: 1px;
+      accent-color: #4f46e5;
+      cursor: pointer;
+    }
+    .newsletter-row label {
+      font-size: 13px;
+      color: #475569;
+      line-height: 1.4;
+      cursor: pointer;
+    }
   </style>
 </head>
 <body>
@@ -136,6 +159,17 @@
         <label class="form-label">Пароль</label>
         <input type="password" id="password" class="form-input" placeholder="Введите пароль" required minlength="4" maxlength="12">
         <div class="form-hint">От 4 до 12 символов</div>
+      </div>
+
+      <div class="form-group" id="parentEmailGroup" style="display:none;">
+        <label class="form-label">Email родителя</label>
+        <input type="email" id="parentEmail" class="form-input" placeholder="parent@example.com">
+        <div class="form-hint">Нужен, только если хочешь подписаться на новости школы</div>
+      </div>
+
+      <div class="newsletter-row" id="newsletterRow" style="display:none;">
+        <input type="checkbox" id="subscribeNewsletter">
+        <label for="subscribeNewsletter">Я согласен подписаться на рассылку (опционально)</label>
       </div>
 
       <button type="submit" id="submitBtn" class="submit-btn">Войти</button>
@@ -166,16 +200,22 @@
       const registerBtn = document.getElementById('registerTabBtn');
       const submitBtn = document.getElementById('submitBtn');
       const errorMsg = document.getElementById('errorMsg');
+      const parentEmailGroup = document.getElementById('parentEmailGroup');
+      const newsletterRow = document.getElementById('newsletterRow');
       errorMsg.style.display = 'none';
 
       if (mode === 'login') {
         loginBtn.classList.add('active');
         registerBtn.classList.remove('active');
         submitBtn.textContent = 'Войти';
+        parentEmailGroup.style.display = 'none';
+        newsletterRow.style.display = 'none';
       } else {
         registerBtn.classList.add('active');
         loginBtn.classList.remove('active');
         submitBtn.textContent = 'Зарегистрироваться';
+        parentEmailGroup.style.display = 'block';
+        newsletterRow.style.display = 'flex';
       }
     }
 
@@ -192,12 +232,27 @@
       }
 
       const endpoint = currentMode === 'login' ? '/api/auth/login' : '/api/auth/register';
+      const payload = { username, password };
+
+      if (currentMode === 'register') {
+        const parentEmail = document.getElementById('parentEmail').value.trim();
+        const subscribeNewsletter = document.getElementById('subscribeNewsletter').checked;
+
+        if (subscribeNewsletter && !parentEmail) {
+          errorMsg.textContent = 'Чтобы подписаться на рассылку, укажи email родителя';
+          errorMsg.style.display = 'block';
+          return;
+        }
+
+        payload.parentEmail = parentEmail;
+        payload.subscribeNewsletter = subscribeNewsletter;
+      }
 
       try {
         const res = await fetch(endpoint, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ username, password }),
+          body: JSON.stringify(payload),
           cache: 'no-store'
         });
 

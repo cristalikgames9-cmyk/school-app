@@ -16,6 +16,43 @@ const supabaseKey = process.env.SUPABASE_KEY || 'placeholder-key';
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 const COOKIE_SECRET = process.env.COOKIE_SECRET || 'insecure-default-secret-change-me';
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+// Подписывает email родителя в MailerLite. Никогда не бросает исключение —
+// если MailerLite не настроен или недоступен, регистрация всё равно должна
+// пройти успешно, просто без подписки.
+async function subscribeToMailerLite(parentEmail, studentUsername) {
+  const apiKey = process.env.MAILERLITE_API_KEY;
+  const groupId = process.env.MAILERLITE_GROUP_ID;
+
+  if (!apiKey || !groupId) {
+    console.warn('MailerLite не настроен (нет MAILERLITE_API_KEY/MAILERLITE_GROUP_ID) — подписка пропущена');
+    return;
+  }
+
+  try {
+    const res = await fetch('https://connect.mailerlite.com/api/subscribers', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+        Authorization: `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        email: parentEmail,
+        fields: { name: studentUsername },
+        groups: [groupId],
+      }),
+    });
+
+    if (!res.ok) {
+      const body = await res.text();
+      console.error('MailerLite: не удалось подписать', parentEmail, res.status, body);
+    }
+  } catch (err) {
+    console.error('MailerLite: ошибка запроса:', err.message || err);
+  }
+}
 
 app.set('trust proxy', 1);
 app.use(express.json());
@@ -134,12 +171,20 @@ app.post('/api/auth/register', async (req, res) => {
   try {
     const username = String(req.body.username || '').trim();
     const password = String(req.body.password || '');
+    const parentEmail = String(req.body.parentEmail || '').trim();
+    const subscribeNewsletter = Boolean(req.body.subscribeNewsletter);
 
     if (username.length < 4 || username.length > 20) {
       return res.status(400).json({ error: 'Логин должен быть от 4 до 20 символов' });
     }
     if (password.length < 4 || password.length > 12) {
       return res.status(400).json({ error: 'Пароль должен быть от 4 до 12 символов' });
+    }
+    if (parentEmail && !EMAIL_RE.test(parentEmail)) {
+      return res.status(400).json({ error: 'Некорректный email родителя' });
+    }
+    if (subscribeNewsletter && !parentEmail) {
+      return res.status(400).json({ error: 'Чтобы подписаться на рассылку, укажи email родителя' });
     }
 
     const { data: existing, error: findErr } = await supabase.from('users').select('id').ilike('username', username);
@@ -149,10 +194,23 @@ app.post('/api/auth/register', async (req, res) => {
     const passwordHash = await bcrypt.hash(password, 10);
     const { data: newUser, error } = await supabase
       .from('users')
-      .insert([{ username, password: passwordHash }])
+      .insert([
+        {
+          username,
+          password: passwordHash,
+          parent_email: parentEmail || null,
+          newsletter_subscribed: subscribeNewsletter,
+        },
+      ])
       .select()
       .single();
     if (error || !newUser) throw error || new Error('Не удалось создать пользователя');
+
+    if (subscribeNewsletter && parentEmail) {
+      // Не блокируем ответ пользователю дольше необходимого и не роняем
+      // регистрацию, если MailerLite сейчас недоступен.
+      await subscribeToMailerLite(parentEmail, username);
+    }
 
     res.cookie('userId', String(newUser.id), COOKIE_OPTIONS);
     res.json({ success: true });

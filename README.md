@@ -117,25 +117,54 @@ create table if not exists users (
 );
 
 -- Новая таблица — сюда пишутся ответы на домашние задания
-create table if not exists answers (
+-- (в твоём проекте она называется homework_results)
+create table if not exists homework_results (
   id bigint generated always as identity primary key,
-  user_id bigint not null references users(id) on delete cascade,
+  user_id text not null,
   lesson_id text not null,
   question_id text not null,
   status text not null, -- correct | partial | incorrect
-  selected_options jsonb not null default '[]'::jsonb,
-  created_at timestamptz default now(),
+  selected_options text[] not null default '{}',
   unique (user_id, lesson_id, question_id)
 );
 
 -- Проект небольшой, для узкого круга, своя система входа (не Supabase Auth) —
 -- поэтому проще отключить Row Level Security:
 alter table users disable row level security;
-alter table answers disable row level security;
+alter table homework_results disable row level security;
 ```
 
-⚠️ Если у таблицы `users` поле `id` не `bigint`, а `uuid` — поменяй
-`user_id bigint` на `user_id uuid` в SQL выше.
+**Для рассылки родителям (MailerLite)** — добавь две колонки в `users`:
+
+```sql
+alter table users add column if not exists parent_email text;
+alter table users add column if not exists newsletter_subscribed boolean default false;
+```
+
+## Рассылка для родителей (MailerLite)
+
+При регистрации ученик может (по желанию) указать email родителя и
+поставить галочку «Я согласен подписаться на рассылку». Если галочка
+отмечена — сервер добавляет этот email как подписчика в твою группу в
+MailerLite через их API. Если галочку не поставили — email просто
+сохраняется в базе (в `users.parent_email`), в MailerLite ничего не уходит.
+
+**Настройка:**
+1. Зарегистрируйся на mailerlite.com (есть бесплатный план).
+2. Создай группу подписчиков (Subscribers → Groups → создать группу,
+   например «Родители учеников»). Открой её и скопируй **Group ID** из
+   адресной строки или настроек группы.
+3. Получи API-ключ: Integrations → MailerLite API → Generate new token.
+4. Добавь в `.env`:
+   ```
+   MAILERLITE_API_KEY=твой_api_ключ
+   MAILERLITE_GROUP_ID=id_группы
+   ```
+5. Перезапусти сервер.
+
+Если переменные не заданы — регистрация всё равно работает нормально,
+просто подписка в MailerLite пропускается (и в консоли сервера будет
+предупреждение об этом, чтобы было понятно, что рассылка не настроена).
 
 ## Настройка `.env`
 
