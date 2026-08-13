@@ -5,57 +5,26 @@ const fs = require('fs');
 const cookieParser = require('cookie-parser');
 const bcrypt = require('bcryptjs');
 const { createClient } = require('@supabase/supabase-js');
+const { getCorrectOptions, gradeAnswer, toPublicTask } = require('./lib/answer-grading');
+const { calculateProgress } = require('./lib/progress');
+const { createMailerLiteClient } = require('./lib/mailerlite');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 const DATA_DIR = path.join(__dirname, 'data');
 const LESSONS_DIR = path.join(DATA_DIR, 'lessons');
+const REPORT_TIME_ZONE = process.env.REPORT_TIME_ZONE || 'America/Costa_Rica';
 
 const supabaseUrl = process.env.SUPABASE_URL || 'https://placeholder.supabase.co';
 const supabaseKey = process.env.SUPABASE_KEY || 'placeholder-key';
 const supabase = createClient(supabaseUrl, supabaseKey);
+const mailerLite = createMailerLiteClient();
 
 const COOKIE_SECRET = process.env.COOKIE_SECRET || 'insecure-default-secret-change-me';
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-// Подписывает email родителя в MailerLite. Никогда не бросает исключение —
-// если MailerLite не настроен или недоступен, регистрация всё равно должна
-// пройти успешно, просто без подписки.
-async function subscribeToMailerLite(parentEmail, studentUsername) {
-  const apiKey = process.env.MAILERLITE_API_KEY;
-  const groupId = process.env.MAILERLITE_GROUP_ID;
-
-  if (!apiKey || !groupId) {
-    console.warn('MailerLite не настроен (нет MAILERLITE_API_KEY/MAILERLITE_GROUP_ID) — подписка пропущена');
-    return;
-  }
-
-  try {
-    const res = await fetch('https://connect.mailerlite.com/api/subscribers', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Accept: 'application/json',
-        Authorization: `Bearer ${apiKey}`,
-      },
-      body: JSON.stringify({
-        email: parentEmail,
-        fields: { name: studentUsername },
-        groups: [groupId],
-      }),
-    });
-
-    if (!res.ok) {
-      const body = await res.text();
-      console.error('MailerLite: не удалось подписать', parentEmail, res.status, body);
-    }
-  } catch (err) {
-    console.error('MailerLite: ошибка запроса:', err.message || err);
-  }
-}
 
 app.set('trust proxy', 1);
-app.use(express.json());
+app.disable('x-powered-by');
+app.use(express.json({ limit: '32kb' }));
 app.use(cookieParser(COOKIE_SECRET));
 
 // /api/* никогда не должен кэшироваться браузером/прокси — иначе после
@@ -142,12 +111,95 @@ const COOKIE_OPTIONS = {
   maxAge: 30 * 24 * 3600 * 1000,
   sameSite: 'lax',
   signed: true,
+  secure: process.env.NODE_ENV === 'production',
 };
+
+const USER_PUBLIC_FIELDS =
+  'id, username, student_name, parent_email, marketing_consent, marketing_consent_at, marketing_consent_ip, progress_month, progress_synced_at, mailerlite_synced_at, mailerlite_sync_error';
+
+function isValidEmail(value) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value) && value.length <= 254;
+}
+
+function toMailerLiteDate(value) {
+  return new Date(value).toISOString().replace('T', ' ').slice(0, 19);
+}
+
+function getRequestIp(req) {
+  const forwarded = String(req.headers['x-forwarded-for'] || '').split(',')[0].trim();
+  return forwarded || req.ip || null;
+}
+
+async function getAnswersForUser(userId) {
+  const { data, error } = await supabase
+    .from('homework_results')
+    .select('lesson_id, question_id, status, selected_options, created_at')
+    .eq('user_id', String(userId));
+  if (error) throw error;
+  return data || [];
+}
+
+async function calculateUserProgress(userId) {
+  return calculateProgress({
+    answers: await getAnswersForUser(userId),
+    lessons: loadAllLessons(),
+    timeZone: REPORT_TIME_ZONE,
+  });
+}
+
+async function syncProgress(user, progress) {
+  const monthly = progress.monthly;
+  const update = {
+    progress_month: monthly.month,
+    lessons_completed_month: monthly.lessonsCompleted,
+    tasks_answered_month: monthly.tasksAnswered,
+    correct_month: monthly.correct,
+    partial_month: monthly.partial,
+    incorrect_month: monthly.incorrect,
+    score_month: monthly.score,
+    progress_synced_at: new Date().toISOString(),
+  };
+
+  const { error } = await supabase.from('users').update(update).eq('id', user.id);
+  if (error) throw error;
+
+  if (!user.marketing_consent || !user.parent_email) return;
+  try {
+    const result = await mailerLite.syncSubscriber({
+      email: user.parent_email,
+      studentName: user.student_name || user.username,
+      stats: monthly,
+      optIn: user.marketing_consent_at
+        ? { at: toMailerLiteDate(user.marketing_consent_at), ip: user.marketing_consent_ip || undefined }
+        : undefined,
+    });
+    if (!result.skipped) {
+      await supabase
+        .from('users')
+        .update({ mailerlite_synced_at: new Date().toISOString(), mailerlite_sync_error: null })
+        .eq('id', user.id);
+    }
+  } catch (error) {
+    await supabase
+      .from('users')
+      .update({ mailerlite_sync_error: String(error.message || error).slice(0, 500) })
+      .eq('id', user.id);
+    throw error;
+  }
+}
+
+function syncProgressInBackground(user, progress) {
+  setImmediate(() => {
+    syncProgress(user, progress).catch((error) => {
+      console.error('progress sync error:', error.message || error);
+    });
+  });
+}
 
 async function getCurrentUser(req) {
   const userId = req.signedCookies.userId;
   if (!userId) return null;
-  const { data: user, error } = await supabase.from('users').select('id, username').eq('id', userId).maybeSingle();
+  const { data: user, error } = await supabase.from('users').select(USER_PUBLIC_FIELDS).eq('id', userId).maybeSingle();
   if (error) {
     console.error('getCurrentUser: ошибка запроса к Supabase:', error.message);
     return null;
@@ -171,20 +223,27 @@ app.post('/api/auth/register', async (req, res) => {
   try {
     const username = String(req.body.username || '').trim();
     const password = String(req.body.password || '');
-    const parentEmail = String(req.body.parentEmail || '').trim();
-    const subscribeNewsletter = Boolean(req.body.subscribeNewsletter);
+    const studentName = String(req.body.studentName || '').trim().replace(/\s+/g, ' ');
+    const parentEmail = String(req.body.parentEmail || '').trim().toLowerCase();
+    const marketingConsent = req.body.marketingConsent === true;
 
     if (username.length < 4 || username.length > 20) {
       return res.status(400).json({ error: 'Логин должен быть от 4 до 20 символов' });
     }
-    if (password.length < 4 || password.length > 12) {
-      return res.status(400).json({ error: 'Пароль должен быть от 4 до 12 символов' });
+    if (!/^[\p{L}\p{N}_.-]+$/u.test(username)) {
+      return res.status(400).json({ error: 'В логине разрешены буквы, цифры, точка, дефис и подчёркивание' });
     }
-    if (parentEmail && !EMAIL_RE.test(parentEmail)) {
-      return res.status(400).json({ error: 'Некорректный email родителя' });
+    if (password.length < 8 || password.length > 72) {
+      return res.status(400).json({ error: 'Новый пароль должен быть от 8 до 72 символов' });
     }
-    if (subscribeNewsletter && !parentEmail) {
-      return res.status(400).json({ error: 'Чтобы подписаться на рассылку, укажи email родителя' });
+    if (studentName.length < 2 || studentName.length > 60) {
+      return res.status(400).json({ error: 'Укажите имя ученика (от 2 до 60 символов)' });
+    }
+    if (parentEmail && !isValidEmail(parentEmail)) {
+      return res.status(400).json({ error: 'Укажите корректный email родителя' });
+    }
+    if (marketingConsent && !parentEmail) {
+      return res.status(400).json({ error: 'Чтобы получать письма, укажите email родителя' });
     }
 
     const { data: existing, error: findErr } = await supabase.from('users').select('id').ilike('username', username);
@@ -192,28 +251,29 @@ app.post('/api/auth/register', async (req, res) => {
     if (existing && existing.length > 0) return res.status(400).json({ error: 'Пользователь существует' });
 
     const passwordHash = await bcrypt.hash(password, 10);
+    const consentAt = marketingConsent ? new Date().toISOString() : null;
     const { data: newUser, error } = await supabase
       .from('users')
       .insert([
         {
           username,
           password: passwordHash,
+          student_name: studentName,
           parent_email: parentEmail || null,
-          newsletter_subscribed: subscribeNewsletter,
+          marketing_consent: marketingConsent,
+          newsletter_subscribed: marketingConsent,
+          marketing_consent_at: consentAt,
+          marketing_consent_ip: marketingConsent ? getRequestIp(req) : null,
         },
       ])
-      .select()
+      .select(USER_PUBLIC_FIELDS)
       .single();
     if (error || !newUser) throw error || new Error('Не удалось создать пользователя');
 
-    if (subscribeNewsletter && parentEmail) {
-      // Не блокируем ответ пользователю дольше необходимого и не роняем
-      // регистрацию, если MailerLite сейчас недоступен.
-      await subscribeToMailerLite(parentEmail, username);
-    }
-
     res.cookie('userId', String(newUser.id), COOKIE_OPTIONS);
-    res.json({ success: true });
+    const progress = calculateProgress({ lessons: loadAllLessons(), timeZone: REPORT_TIME_ZONE });
+    syncProgressInBackground(newUser, progress);
+    res.status(201).json({ success: true });
   } catch (err) {
     console.error('register error:', err.message || err);
     res.status(500).json({ error: 'Ошибка регистрации (проверь настройки Supabase — см. README)' });
@@ -225,13 +285,16 @@ app.post('/api/auth/login', async (req, res) => {
     const username = String(req.body.username || '').trim();
     const password = String(req.body.password || '');
 
-    const { data: users, error } = await supabase.from('users').select('*').ilike('username', username);
+    const { data: users, error } = await supabase
+      .from('users')
+      .select(`${USER_PUBLIC_FIELDS}, password`)
+      .ilike('username', username);
     if (error) throw error;
-    if (!users || users.length === 0) return res.status(401).json({ error: 'Неверный логин' });
+    if (!users || users.length === 0) return res.status(401).json({ error: 'Неверный логин или пароль' });
 
     const user = users[0];
     const passwordOk = await bcrypt.compare(password, user.password || '');
-    if (!passwordOk) return res.status(401).json({ error: 'Неверный пароль' });
+    if (!passwordOk) return res.status(401).json({ error: 'Неверный логин или пароль' });
 
     res.cookie('userId', String(user.id), COOKIE_OPTIONS);
     res.json({ success: true });
@@ -242,55 +305,46 @@ app.post('/api/auth/login', async (req, res) => {
 });
 
 app.post('/api/auth/logout', (req, res) => {
-  res.clearCookie('userId');
+  res.clearCookie('userId', { httpOnly: true, sameSite: 'lax', secure: process.env.NODE_ENV === 'production' });
   res.json({ success: true });
 });
 
 app.get('/api/auth/me', async (req, res) => {
   // Сначала строго проверяем авторизацию — независимо от того, получится
   // ли посчитать прогресс. Раньше ошибка в блоке ниже (например, если
-  // таблицы answers ещё нет в Supabase) "маскировала" уже успешный вход,
+  // таблицы homework_results ещё нет в Supabase) "маскировала" уже успешный вход,
   // и авторизованный пользователь ошибочно выглядел как гость.
   const user = await getCurrentUser(req);
   if (!user) return res.json({ user: null });
 
   try {
     const allLessons = loadAllLessons();
-    const totalLessons = allLessons.length;
-
-    const { data: answers, error } = await supabase
-      .from('homework_results')
-      .select('lesson_id, question_id')
-      .eq('user_id', String(user.id));
-    if (error) throw error;
-
-    const answeredCountByLesson = {};
-    (answers || []).forEach((a) => {
-      answeredCountByLesson[a.lesson_id] = (answeredCountByLesson[a.lesson_id] || 0) + 1;
-    });
-
-    const lessonsById = Object.fromEntries(allLessons.map((l) => [l.id, l]));
-    const completedLessonIds = Object.keys(answeredCountByLesson).filter((lessonId) => {
-      const lesson = lessonsById[lessonId];
-      const totalTasks = lesson && lesson.tasks ? lesson.tasks.length : 0;
-      return totalTasks > 0 && answeredCountByLesson[lessonId] >= totalTasks;
-    });
+    const progress = await calculateUserProgress(user.id);
+    const monthChanged = user.progress_month !== progress.monthly.month;
+    const directMailerLiteRetryNeeded =
+      mailerLite.enabled &&
+      user.marketing_consent &&
+      (!user.mailerlite_synced_at ||
+        (user.progress_synced_at && new Date(user.mailerlite_synced_at) < new Date(user.progress_synced_at)));
+    if (monthChanged || directMailerLiteRetryNeeded) syncProgressInBackground(user, progress);
 
     res.json({
-      user: { id: user.id, username: user.username },
-      totalLessons,
-      completedLessons: completedLessonIds.length,
-      completedLessonIds,
+      user: { id: user.id, username: user.username, studentName: user.student_name || user.username },
+      totalLessons: allLessons.length,
+      completedLessons: progress.completedLessons,
+      completedLessonIds: progress.completedLessonIds,
+      monthly: progress.monthly,
     });
   } catch (err) {
-    // Прогресс не посчитался (например, нет таблицы answers в Supabase) —
+    // Прогресс не посчитался (например, нет таблицы homework_results в Supabase) —
     // но пользователь точно вошёл, поэтому user всё равно возвращаем.
-    console.error('me: ошибка подсчёта прогресса (проверь таблицу answers в Supabase):', err.message || err);
+    console.error('me: ошибка подсчёта прогресса (проверь таблицу homework_results в Supabase):', err.message || err);
     res.json({
-      user: { id: user.id, username: user.username },
+      user: { id: user.id, username: user.username, studentName: user.student_name || user.username },
       totalLessons: 0,
       completedLessons: 0,
       completedLessonIds: [],
+      monthly: null,
     });
   }
 });
@@ -323,57 +377,74 @@ app.get('/api/lessons/:id', (req, res) => {
 
 // === API Домашних заданий =====================================================
 
-app.get('/api/homework/:lessonId', async (req, res) => {
+app.get('/api/homework/:lessonId', requireAuth, async (req, res) => {
   const lesson = loadAllLessons().find((l) => String(l.id) === String(req.params.lessonId));
   if (!lesson || !lesson.tasks) return res.status(404).json({ error: 'Задание не найдено' });
 
   // Сохранённые ответы — best-effort: если Supabase недоступна или таблицы
-  // answers ещё нет, всё равно показываем задания, просто без пометок о
+  // homework_results ещё нет, всё равно показываем задания, просто без пометок о
   // том, что уже отвечено (раньше это валило всю страницу ошибкой 500).
   let savedAnswers = [];
   try {
-    const user = await getCurrentUser(req);
-    if (user) {
-      const { data, error } = await supabase
-        .from('homework_results')
-        .select('question_id, status, selected_options')
-        .eq('user_id', String(user.id))
-        .eq('lesson_id', req.params.lessonId);
-      if (error) throw error;
-      savedAnswers = data || [];
-    }
+    const { data, error } = await supabase
+      .from('homework_results')
+      .select('question_id, status, selected_options')
+      .eq('user_id', String(req.user.id))
+      .eq('lesson_id', req.params.lessonId);
+    if (error) throw error;
+    savedAnswers = (data || []).map((answer) => {
+      const task = lesson.tasks.find((item) => String(item.id) === String(answer.question_id));
+      return { ...answer, correct_options: getCorrectOptions(task) };
+    });
   } catch (err) {
-    console.error('homework get: не удалось получить сохранённые ответы (проверь таблицу answers в Supabase):', err.message || err);
+    console.error(
+      'homework get: не удалось получить сохранённые ответы (проверь таблицу homework_results в Supabase):',
+      err.message || err
+    );
   }
 
-  res.json({ tasks: lesson.tasks, savedAnswers });
+  res.json({ tasks: lesson.tasks.map(toPublicTask), savedAnswers });
 });
 
 app.post('/api/homework/:lessonId/submit', requireAuth, async (req, res) => {
   try {
-    const { questionId, status, selectedOptions } = req.body;
-    if (!questionId || !status || !Array.isArray(selectedOptions)) {
+    const { questionId, selectedOptions } = req.body;
+    if (!questionId || !Array.isArray(selectedOptions)) {
       return res.status(400).json({ error: 'Недостаточно данных' });
     }
 
-    const { error } = await supabase.from('homework_results').upsert(
+    const lesson = loadAllLessons().find((item) => String(item.id) === String(req.params.lessonId));
+    const task = lesson?.tasks?.find((item) => String(item.id) === String(questionId));
+    if (!task) return res.status(404).json({ error: 'Вопрос не найден' });
+
+    let status;
+    try {
+      status = gradeAnswer(task, selectedOptions);
+    } catch (error) {
+      if (error.message === 'INVALID_ANSWER') return res.status(400).json({ error: 'Некорректный ответ' });
+      throw error;
+    }
+
+    const { error } = await supabase.from('homework_results').insert(
       {
         user_id: String(req.user.id),
         lesson_id: req.params.lessonId,
-        question_id: questionId,
+        question_id: String(questionId),
         status,
         selected_options: selectedOptions,
-      },
-      { onConflict: 'user_id,lesson_id,question_id' }
+      }
     );
+    if (error?.code === '23505') {
+      return res.status(409).json({ error: 'Этот ответ уже был сохранён' });
+    }
     if (error) throw error;
 
-    res.json({ ok: true });
+    const progress = await calculateUserProgress(req.user.id);
+    syncProgressInBackground(req.user, progress);
+    res.json({ ok: true, status, correctOptions: getCorrectOptions(task), monthly: progress.monthly });
   } catch (err) {
     console.error('homework submit error:', err.message || err);
-    // Отдаём текст реальной ошибки Supabase прямо клиенту — на маленьком
-    // проекте это ускоряет отладку, не нужно лазить в консоль сервера.
-    res.status(500).json({ error: err.message || 'Не получилось сохранить ответ' });
+    res.status(500).json({ error: 'Не получилось сохранить ответ' });
   }
 });
 

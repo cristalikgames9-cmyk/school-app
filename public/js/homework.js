@@ -139,7 +139,7 @@ window.addEventListener('pageshow', (event) => {
           const disabledAttr = isLocked ? 'disabled' : '';
           let extraClass = '';
           if (isLocked) {
-            const correctIds = Array.isArray(task.correctAnswer) ? task.correctAnswer : [task.correctAnswer];
+            const correctIds = Array.isArray(saved.correct_options) ? saved.correct_options : [];
             if (correctIds.includes(opt.id)) extraClass = ' correct-answer';
             else if (isChecked) extraClass = ' wrong-answer';
           }
@@ -227,8 +227,6 @@ window.addEventListener('pageshow', (event) => {
       }
     }
 
-    const status = computeStatus(task, selected);
-
     const submitBtn = document.getElementById('submitAnswerBtn');
     if (submitBtn) {
       submitBtn.disabled = true;
@@ -239,11 +237,11 @@ window.addEventListener('pageshow', (event) => {
       const res = await fetch(`/api/homework/${lessonId}/submit`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ questionId: task.id, status, selectedOptions: selected }),
+        body: JSON.stringify({ questionId: task.id, selectedOptions: selected }),
       });
+      const body = await res.json().catch(() => ({}));
 
       if (!res.ok) {
-        const body = await res.json().catch(() => ({}));
         alert('Не получилось сохранить ответ на сервере:\n' + (body.error || 'неизвестная ошибка') + '\n\nОтвет НЕ засчитан, попробуй ещё раз.');
         if (submitBtn) {
           submitBtn.disabled = false;
@@ -251,6 +249,15 @@ window.addEventListener('pageshow', (event) => {
         }
         return; // не блокируем вопрос локально — сервер его не сохранил
       }
+
+      // Статус приходит от сервера: браузер больше не может сам назначить
+      // себе правильный результат.
+      savedAnswers[task.id] = {
+        question_id: task.id,
+        status: body.status,
+        selected_options: selected,
+        correct_options: body.correctOptions || [],
+      };
     } catch (err) {
       alert('Не получилось соединиться с сервером. Проверь интернет и попробуй ещё раз.');
       if (submitBtn) {
@@ -260,32 +267,7 @@ window.addEventListener('pageshow', (event) => {
       return;
     }
 
-    // Сервер подтвердил сохранение — только теперь помечаем вопрос как отвеченный
-    savedAnswers[task.id] = { question_id: task.id, status, selected_options: selected };
-
     renderSidebar();
     renderQuestion(currentTaskIndex);
-  }
-
-  function computeStatus(task, selected) {
-    if (task.type === 'text') {
-      const accepted = Array.isArray(task.correctAnswer) ? task.correctAnswer : [task.correctAnswer];
-      const given = String(selected[0] || '').trim().toLowerCase();
-      const isCorrect = accepted.some((a) => String(a).trim().toLowerCase() === given);
-      return isCorrect ? 'correct' : 'incorrect';
-    }
-
-    if (task.type === 'multiple') {
-      const correct = Array.isArray(task.correctAnswer) ? task.correctAnswer : [task.correctAnswer];
-      const selSet = new Set(selected);
-      const corSet = new Set(correct);
-      const exact = selSet.size === corSet.size && [...selSet].every((v) => corSet.has(v));
-      if (exact) return 'correct';
-      const overlap = [...selSet].some((v) => corSet.has(v));
-      return overlap ? 'partial' : 'incorrect';
-    }
-
-    // "normal" — один правильный вариант
-    return selected.length === 1 && selected[0] === task.correctAnswer ? 'correct' : 'incorrect';
   }
 })();

@@ -192,6 +192,65 @@ input:focus-visible {
   transition: width .5s var(--ease);
 }
 
+.monthly-progress-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 22px;
+  margin-bottom: 28px;
+  box-shadow: var(--shadow-sm);
+}
+
+.monthly-progress-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+
+.monthly-progress-heading h2 {
+  font-family: var(--font-display);
+  font-size: 20px;
+  margin-top: 4px;
+}
+
+.score-badge {
+  min-width: 92px;
+  padding: 10px 14px;
+  border-radius: var(--radius-md);
+  background: var(--gradient-brand);
+  color: #fff;
+  text-align: center;
+  box-shadow: var(--shadow-brand);
+}
+
+.score-badge strong { font-family: var(--font-display); font-size: 25px; }
+.score-badge span { font-size: 12px; margin-left: 3px; opacity: .8; }
+
+.monthly-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.monthly-stats-grid > div {
+  min-height: 82px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 12px;
+  border-radius: var(--radius-md);
+  background: var(--paper);
+  border: 1px solid var(--border);
+}
+
+.monthly-stats-grid strong { font-family: var(--font-display); font-size: 21px; }
+.monthly-stats-grid span { color: var(--ink-soft); font-size: 11px; line-height: 1.35; }
+.monthly-stats-grid .stat-correct strong { color: var(--success); }
+.monthly-stats-grid .stat-partial strong { color: var(--warning); }
+.monthly-stats-grid .stat-incorrect strong { color: var(--danger); }
+
 /* ==========================================================================
    Сетка предметов на главной
    ========================================================================== */
@@ -701,4 +760,5 @@ input:focus-visible {
   .main-container { padding: 0 16px; margin: 28px auto; }
   .hw-layout { grid-template-columns: 1fr; }
   .hw-sidebar { order: 2; }
+  .monthly-stats-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }

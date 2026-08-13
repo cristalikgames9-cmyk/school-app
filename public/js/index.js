@@ -4,6 +4,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   const welcomeText = document.getElementById('welcomeText');
   const progressBox = document.getElementById('progressBox');
   const progressText = document.getElementById('progressText');
+  const monthlyProgressBox = document.getElementById('monthlyProgressBox');
   const logoutBtn = document.getElementById('logoutBtn');
   const loginBtn = document.getElementById('loginBtn');
 
@@ -23,8 +24,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     const authData = await authRes.json();
 
     if (authData.user) {
-      if (userNameEl) userNameEl.textContent = `👋 ${authData.user.username}`;
-      if (welcomeText) welcomeText.textContent = `Привет, ${authData.user.username}!`;
+      const displayName = authData.user.studentName || authData.user.username;
+      if (userNameEl) userNameEl.textContent = `👋 ${displayName}`;
+      if (welcomeText) welcomeText.textContent = `Привет, ${displayName}!`;
       if (logoutBtn) logoutBtn.style.display = '';
       if (loginBtn) loginBtn.style.display = 'none';
 
@@ -39,12 +41,27 @@ document.addEventListener('DOMContentLoaded', async () => {
         `;
         progressBox.style.display = 'block';
       }
+
+      if (monthlyProgressBox && authData.monthly) {
+        const monthly = authData.monthly;
+        const monthDate = new Date(`${monthly.month}-01T12:00:00Z`);
+        const monthTitle = new Intl.DateTimeFormat('ru', { month: 'long', year: 'numeric' }).format(monthDate);
+        document.getElementById('monthlyProgressTitle').textContent = `Результаты · ${monthTitle}`;
+        document.getElementById('monthlyScore').textContent = monthly.score;
+        document.getElementById('monthlyLessons').textContent = monthly.lessonsCompleted;
+        document.getElementById('monthlyTasks').textContent = monthly.tasksAnswered;
+        document.getElementById('monthlyCorrect').textContent = monthly.correct;
+        document.getElementById('monthlyPartial').textContent = monthly.partial;
+        document.getElementById('monthlyIncorrect').textContent = monthly.incorrect;
+        monthlyProgressBox.style.display = 'block';
+      }
     } else {
       // Гость: не редиректим, просто показываем кнопку "Войти" вместо ника
       if (userNameEl) userNameEl.textContent = '👋 Гость';
       if (logoutBtn) logoutBtn.style.display = 'none';
       if (loginBtn) loginBtn.style.display = '';
       if (progressBox) progressBox.style.display = 'none';
+      if (monthlyProgressBox) monthlyProgressBox.style.display = 'none';
     }
 
     // Предметы видны всем — и гостям, и авторизованным.
