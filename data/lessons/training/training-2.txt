@@ -1,0 +1,51 @@
+{
+  "id": "training-2",
+  "subjectId": "training",
+  "title": "Урок 2. Знакомство с предметом «Физическая культура»",
+  "videoUrl": "https://kinescope.io/sGuWrKFLzbeBDND79oAHUw",
+  "content": "Есть один вид спорта, который во всём мире называют «Королевой спорта», он очень зрелищный и неповторимый. Как ты думаешь, могли бы так называться футбол, биатлон, волейбол, беговые лыжи или шахматы? Ведь они все тоже очень зрелищные и любимы не только взрослыми, но и детьми. ",
+  "tasks": [
+    {
+      "id": "t1",
+      "type": "normal",
+      "question": "Сколько метров составляет марафонская дистанция?",
+      "image": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQpjKtj28JdDSB8xN-91ovHWx3BKzZff8BvmWZtsPcxx5H2RoRTSr42_V-6&s=10",
+      "options": [
+        { "id": "A", "text": "100 метров" },
+        { "id": "B", "text": "1 километр" },
+        { "id": "C", "text": "42 километра 195 метров" },
+      ],
+      "correctAnswer": "C"
+    },
+    {
+      "id": "t2",
+      "type": "normal",
+      "question": "Разминку перед занятием делать не обязательно?",
+      "image": null,
+      "options": [
+        { "id": "A", "text": "Да" },
+        { "id": "B", "text": "Нет" },
+      ],
+      "correctAnswer": "A"
+    },
+    {
+      "id": "t3",
+      "type": "text",
+      "question": "Какое общее число километров нужно пробежать в марафоне? (10, 42 или 100)",
+      "image": null,
+      "correctAnswer": ["42", "сорок два"]
+    },
+    {
+      "id": "t4",
+      "type": "normal",
+      "question": "С чего всегда нужно начинать тренировку, чтобы не получить травму?",
+      "image": null,
+      "options": [
+        { "id": "A", "text": "Со сна" },
+        { "id": "B", "text": "С разминки" },
+        { "id": "C", "text": "С обеда" },
+      ],
+      "correctAnswer": "B"
+    }
+  ]
+}
