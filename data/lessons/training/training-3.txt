@@ -1,0 +1,51 @@
+{
+  "id": "training-3",
+  "subjectId": "training",
+  "title": "Урок 3. Режим дня",
+  "videoUrl": "https://kinescope.io/9Y65ouiAMFpyGpv7FcRGDB",
+  "content": "На этом уроке мы обсудим очень важную и интересную тему — режим дня. Изучим правила рационального распорядка дня и основные правила зарядки. Поговорим о личной гигиене и том, как правильно её соблюдать. Всё это помогает нам оставаться здоровыми!",
+  "tasks": [
+    {
+      "id": "t1",
+      "type": "normal",
+      "question": "Сколько метров составляет марафонская дистанция?",
+      "image": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQpjKtj28JdDSB8xN-91ovHWx3BKzZff8BvmWZtsPcxx5H2RoRTSr42_V-6&s=10",
+      "options": [
+        { "id": "A", "text": "100 метров" },
+        { "id": "B", "text": "1 километр" },
+        { "id": "C", "text": "42 километра 195 метров" }
+      ],
+      "correctAnswer": "C"
+    },
+    {
+      "id": "t2",
+      "type": "normal",
+      "question": "Разминку перед занятием делать не обязательно?",
+      "image": null,
+      "options": [
+        { "id": "A", "text": "Да" },
+        { "id": "B", "text": "Нет" }
+      ],
+      "correctAnswer": "B"
+    },
+    {
+      "id": "t3",
+      "type": "text",
+      "question": "Какое общее число километров нужно пробежать в марафоне? (10, 42 или 100)",
+      "image": null,
+      "correctAnswer": ["42", "сорок два"]
+    },
+    {
+      "id": "t4",
+      "type": "normal",
+      "question": "С чего всегда нужно начинать тренировку, чтобы не получить травму?",
+      "image": null,
+      "options": [
+        { "id": "A", "text": "Со сна" },
+        { "id": "B", "text": "С разминки" },
+        { "id": "C", "text": "С обеда" }
+      ],
+      "correctAnswer": "B"
+    }
+  ]
+}
