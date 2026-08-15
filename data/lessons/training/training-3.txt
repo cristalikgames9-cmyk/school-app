@@ -8,44 +8,48 @@
     {
       "id": "t1",
       "type": "normal",
-      "question": "Сколько метров составляет марафонская дистанция?",
-      "image": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQpjKtj28JdDSB8xN-91ovHWx3BKzZff8BvmWZtsPcxx5H2RoRTSr42_V-6&s=10",
+      "question": "Что такое «режим дня»?",
+      "image": "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS1DuoHOPgRlK6qSQmXpPK7ahSuNmeYnm1QerUqd6vTAA9_bUWZE4J-9AAe&s=10",
       "options": [
-        { "id": "A", "text": "100 метров" },
-        { "id": "B", "text": "1 километр" },
-        { "id": "C", "text": "42 километра 195 метров" }
+        { "id": "A", "text": "Правильный порядок дел и отдыха." },
+        { "id": "B", "text": "Название новой школьной игры." },
+        { "id": "C", "text": "Список вкусных продуктов." },
+        { "id": "C", "text": "Расписание игр и мультиков." }
       ],
-      "correctAnswer": "C"
+      "correctAnswer": "A"
     },
     {
       "id": "t2",
       "type": "normal",
-      "question": "Разминку перед занятием делать не обязательно?",
+      "question": "Сколько часов нужно спать первокласснику каждую ночь, чтобы отлично выспаться?",
       "image": null,
       "options": [
-        { "id": "A", "text": "Да" },
-        { "id": "B", "text": "Нет" }
+        { "id": "A", "text": "Примерно 4-5 часов." },
+        { "id": "B", "text": "Примерно 18-20 часов." },
+        { "id": "C", "text": "Примерно 10-11 часов." },
+        { "id": "D", "text": "Примерно 1-2 часов." }
       ],
-      "correctAnswer": "B"
+      "correctAnswer": "C"
     },
     {
       "id": "t3",
       "type": "text",
-      "question": "Какое общее число километров нужно пробежать в марафоне? (10, 42 или 100)",
+      "question": "Какое действие помогает нам проснуться, улучшить работу сердца и дать бодрость на весь день",
       "image": null,
-      "correctAnswer": ["42", "сорок два"]
+      "correctAnswer": ["Зарядка", "зарядка"]
     },
     {
       "id": "t4",
-      "type": "normal",
-      "question": "С чего всегда нужно начинать тренировку, чтобы не получить травму?",
-      "image": null,
+      "type": "multiple",
+      "question": "Когда обязательно нужно мыть руки с мылом? (Выбери все правильные ответы.)",
+      "image": "https://www.deznet.ru/upload/dev2fun.imagecompress/webp/iblock/51b/mvmzcg67xs157730d9ekpx1r1m6efvfe.webp",
       "options": [
-        { "id": "A", "text": "Со сна" },
-        { "id": "B", "text": "С разминки" },
-        { "id": "C", "text": "С обеда" }
-      ],
-      "correctAnswer": "B"
-    }
+        { "id": "A", "text": "Только раз в неделю." },
+        { "id": "B", "text": "Перед едой." },
+        { "id": "C", "text": "Только во время купания." },
+        { "id": "D", "text": "После улицы." }
+  ],
+  "correctAnswer": ["B", "D"]
+}
   ]
 }
