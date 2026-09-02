@@ -314,6 +314,248 @@ input:focus-visible {
 }
 
 /* ==========================================================================
+   Недельный календарь на главной
+   ========================================================================== */
+.calendar-section {
+  margin-top: 42px;
+  padding-top: 4px;
+}
+
+.calendar-toolbar {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 20px;
+  margin-bottom: 14px;
+}
+
+.calendar-toolbar h2 {
+  margin-top: 4px;
+  font-family: var(--font-display);
+  font-size: 24px;
+  letter-spacing: -.02em;
+}
+
+.calendar-week-title {
+  margin-top: 4px;
+  color: var(--ink-soft);
+  font-size: 14px;
+}
+
+.calendar-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.calendar-nav-btn,
+.calendar-today-btn {
+  min-height: 40px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--card);
+  color: var(--ink);
+  font: 700 14px var(--font-body);
+  cursor: pointer;
+  box-shadow: var(--shadow-sm);
+  transition: border-color .15s var(--ease), background .15s var(--ease), transform .15s var(--ease);
+}
+
+.calendar-nav-btn {
+  width: 42px;
+  font-size: 20px;
+}
+
+.calendar-today-btn { padding: 0 14px; }
+
+.calendar-nav-btn:hover,
+.calendar-today-btn:hover {
+  border-color: var(--border-focus);
+  background: var(--tint);
+  transform: translateY(-1px);
+}
+
+.calendar-status {
+  min-height: 23px;
+  margin-bottom: 8px;
+  color: var(--ink-soft);
+  font-size: 13px;
+}
+
+.calendar-status-error { color: var(--danger); }
+
+.calendar-scroll {
+  max-height: 720px;
+  overflow: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  background: var(--card);
+  box-shadow: var(--shadow-sm);
+  overscroll-behavior: contain;
+}
+
+.weekly-calendar {
+  --calendar-hour-height: 72px;
+  position: relative;
+  min-width: 980px;
+  display: grid;
+  grid-template-columns: 72px repeat(7, minmax(124px, 1fr));
+  grid-template-rows: 66px repeat(24, var(--calendar-hour-height));
+}
+
+.calendar-corner,
+.calendar-day-header {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 8px 10px;
+  background: #F8FAFC;
+  border-bottom: 1px solid var(--border);
+}
+
+.calendar-corner {
+  left: 0;
+  z-index: 7;
+  align-items: center;
+  color: var(--ink-faint);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.calendar-day-header {
+  align-items: center;
+  border-left: 1px solid var(--border);
+  color: var(--ink-soft);
+}
+
+.calendar-day-header span {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.calendar-day-header strong {
+  color: var(--ink);
+  font-family: var(--font-display);
+  font-size: 14px;
+}
+
+.calendar-day-header.is-today {
+  background: #EEF2FF;
+  color: var(--indigo);
+}
+
+.calendar-day-header.is-today strong { color: var(--indigo-dark); }
+
+.calendar-time-cell {
+  position: sticky;
+  left: 0;
+  z-index: 3;
+  padding: 7px 9px 0 0;
+  background: #F8FAFC;
+  border-bottom: 1px solid var(--border);
+  color: var(--ink-faint);
+  text-align: right;
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+}
+
+.calendar-hour-cell {
+  position: relative;
+  min-width: 0;
+  padding: 5px;
+  border-left: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  background: var(--card);
+}
+
+.calendar-hour-cell.is-today { background: rgba(238, 242, 255, .42); }
+
+.calendar-event {
+  position: relative;
+  z-index: 2;
+  display: block;
+  min-height: 58px;
+  padding: 7px 8px;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--event-color) 32%, white);
+  border-left: 4px solid var(--event-color);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--event-color) 10%, white);
+  color: var(--ink);
+  text-decoration: none;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, .08);
+}
+
+.calendar-event + .calendar-event { margin-top: 4px; }
+.calendar-event:hover { filter: brightness(.98); box-shadow: var(--shadow-sm); }
+.calendar-event-meta {
+  display: block;
+  overflow: hidden;
+  color: var(--ink-soft);
+  font-size: 9px;
+  font-weight: 700;
+  line-height: 1.25;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.calendar-event strong {
+  display: -webkit-box;
+  margin-top: 3px;
+  overflow: hidden;
+  font-size: 10.5px;
+  line-height: 1.25;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.calendar-event-russian { --event-color: #7C3AED; }
+.calendar-event-math { --event-color: #2563EB; }
+.calendar-event-lit { --event-color: #DB2777; }
+.calendar-event-world { --event-color: #059669; }
+.calendar-event-izo { --event-color: #EA580C; }
+.calendar-event-training { --event-color: #16A34A; }
+.calendar-event-default { --event-color: var(--indigo); }
+
+.calendar-now-line {
+  position: absolute;
+  left: 0;
+  right: 0;
+  z-index: 4;
+  height: 2px;
+  background: var(--danger);
+  pointer-events: none;
+}
+
+.calendar-now-line::before {
+  position: absolute;
+  top: -3px;
+  left: -4px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--danger);
+  content: '';
+}
+
+.calendar-end-time {
+  position: absolute;
+  bottom: 2px;
+  left: 0;
+  width: 64px;
+  z-index: 4;
+  color: var(--ink-faint);
+  text-align: right;
+  font-size: 10px;
+  font-variant-numeric: tabular-nums;
+  pointer-events: none;
+}
+
+/* ==========================================================================
    Страницы предметов и уроков
    ========================================================================== */
 .back-link {
@@ -761,4 +1003,9 @@ input:focus-visible {
   .hw-layout { grid-template-columns: 1fr; }
   .hw-sidebar { order: 2; }
   .monthly-stats-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .calendar-toolbar { align-items: flex-start; flex-direction: column; }
+  .calendar-controls { width: 100%; }
+  .calendar-today-btn { flex: 1; }
+  .calendar-scroll { max-height: 620px; }
+  .weekly-calendar { min-width: 870px; grid-template-columns: 62px repeat(7, minmax(112px, 1fr)); }
 }

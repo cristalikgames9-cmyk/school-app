@@ -8,6 +8,7 @@ const { createClient } = require('@supabase/supabase-js');
 const { getCorrectOptions, gradeAnswer, toPublicTask } = require('./lib/answer-grading');
 const { calculateProgress } = require('./lib/progress');
 const { createMailerLiteClient } = require('./lib/mailerlite');
+const { buildCalendarLessons } = require('./lib/lesson-schedule');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -353,6 +354,11 @@ app.get('/api/auth/me', async (req, res) => {
 
 app.get('/api/subjects', (req, res) => {
   res.json(readJSON('subjects.json') || []);
+});
+
+app.get('/api/calendar', (req, res) => {
+  const subjects = readJSON('subjects.json') || [];
+  res.json(buildCalendarLessons(loadAllLessons(), subjects));
 });
 
 app.get('/api/subjects/:id', (req, res) => {
