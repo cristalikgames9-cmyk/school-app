@@ -2,6 +2,7 @@
   "id": "russian-1",
   "subjectId": "russian",
   "title": "Урок 1. Язык - к знанию ключ",
+  "scheduledAt": "2026-09-02T10:00",
   "videoUrl": "https://kinescope.io/2rMamCf32Re1KDKGjVGkMs",
   "content": "Языки мира",
   "tasks": [

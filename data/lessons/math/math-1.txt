@@ -2,6 +2,7 @@
   "id": "math-1",
   "subjectId": "math",
   "title": "Урок 1. Счёт предметов.",
+  "scheduledAt": "2026-09-02T09:00",
   "videoUrl": "https://kinescope.io/a8nJVxukbj9cwjq81YNtqz",
   "content": "На этом уроке ребёнок покажет умение считать в пределах 10.",
   "tasks": [
