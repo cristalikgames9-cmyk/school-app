@@ -1,0 +1,44 @@
+{
+  "id": "russian-2",
+  "subjectId": "russian",
+  "title": "Урок 2. Звук и буква А",
+  "scheduledAt": "2026-09-03T09:00",
+  "videoUrl": "https://kinescope.io/5sn1FvF2d2mcNU73Rbjhai",
+  "content": "На этом уроке мы познакомимся с буквой и звуком А. А - это первая буква русского алфавита.",
+  "tasks": [
+    {
+      "id": "t1",
+      "type": "normal",
+      "question": "Какая по счёту буква "A" в русском алфавите?",
+      "image": null,
+      "options": [
+        { "id": "A", "text": "1(первая)" },
+        { "id": "B", "text": "5(пятая)" },
+        { "id": "C", "text": "9(девятая)" },
+        { "id": "D", "text": "Этой буквы не существует." }
+      ],
+      "correctAnswer": "A"
+    },
+    {
+      "id": "t2",
+      "type": "text",
+      "question": Сколько букв в имени "АННА". Впишите цифру или дробь без знаков препинания.",
+      "image": null,
+      "correctAnswer": ["2", "две", "два"]
+    },
+    
+    {
+      "id": "t4",
+      "type": "normal",
+      "question": "В каком слове есть буква "А"?",
+      "image": null,
+      "options": [
+        { "id": "A", "text": "Дом" },
+        { "id": "B", "text": "Лес" },
+        { "id": "C", "text": "Кот" },
+        { "id": "D", "text": "Анды" }
+      ],
+      "correctAnswer": "D"
+    },
+  ]
+}

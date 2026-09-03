@@ -1,0 +1,21 @@
+{
+  "id": "izo-1",
+  "subjectId": "izo",
+  "title": "Урок 1. Изображения вокруг нас.",
+  "scheduledAt": "2026-09-03T010:00",
+  "videoUrl": "https://kinescope.io/wqopmWWk3PoJ6CbVqget7q",
+  "content": "На этом уроке мы познакомимся с ИЗО.",
+  "tasks": [
+    {
+      "id": "t1",
+      "type": "multiple",
+      "question": "Ты нарисовал солнышко?",
+      "image": null,
+      "options": [
+        { "id": "A", "text": "Да." },
+        { "id": "B", "text": "Нет." }
+      ],
+      "correctAnswer": "A,B"
+    }
+  ]
+}
