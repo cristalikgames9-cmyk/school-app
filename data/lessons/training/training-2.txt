@@ -21,13 +21,13 @@
     {
       "id": "t2",
       "type": "normal",
-      "question": "Разминку перед занятием делать не обязательно?",
+      "question": "Разминку перед занятием делать обязательно?",
       "image": null,
       "options": [
         { "id": "A", "text": "Да" },
         { "id": "B", "text": "Нет" }
       ],
-      "correctAnswer": "B"
+      "correctAnswer": "A"
     },
     {
       "id": "t3",

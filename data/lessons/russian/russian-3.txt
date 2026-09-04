@@ -17,7 +17,7 @@
         { "id": "C", "text": "Барабан" },
         { "id": "D", "text": "Тут нет такой буквы." }
       ],
-      "correctAnswer": "B"
+      "correctAnswer": "C"
     },
     {
       "id": "t2",
