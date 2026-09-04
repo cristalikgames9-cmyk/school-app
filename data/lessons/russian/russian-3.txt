@@ -1,0 +1,43 @@
+{
+  "id": "russian-3",
+  "subjectId": "russian",
+  "title": "Урок 3. Звук и буква Б",
+  "scheduledAt": "2026-09-04T10:00",
+  "videoUrl": "https://kinescope.io/krn6W9B2X9eFRtGufdfVG1",
+  "content": "На этом уроке мы познакомимся с буквой и звуком Б. Б - это вторая буква русского алфавита.",
+  "tasks": [
+    {
+      "id": "t1",
+      "type": "normal",
+      "question": "В каком слове есть буква Б?",
+      "image": "https://online-azbuka.ru/image/bukvab.jpg",
+      "options": [
+        { "id": "A", "text": "Карандаш" },
+        { "id": "B", "text": "Гусь" },
+        { "id": "C", "text": "Барабан" },
+        { "id": "D", "text": "Тут нет такой буквы." }
+      ],
+      "correctAnswer": "B"
+    },
+    {
+      "id": "t2",
+      "type": "text",
+      "question": "Сколько букв Б в слове «Три»? Впишите цифру или слово без знаков препинания.",
+      "image": null,
+      "correctAnswer": ["0", "Ноль", "Нет"]
+    },
+    {
+      "id": "t3",
+      "type": "normal",
+      "question": "В каком слове НЕТ буквы «Б»?",
+      "image": null,
+      "options": [
+        { "id": "A", "text": "Балл" },
+        { "id": "B", "text": "Соус" },
+        { "id": "C", "text": "Букварь" },
+        { "id": "D", "text": "Булка" }
+      ],
+      "correctAnswer": "B"
+    }
+  ]
+}
